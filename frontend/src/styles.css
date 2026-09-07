@@ -1,0 +1,6 @@
+:root { color-scheme: light; font-family: 'DM Sans', sans-serif; color: #17231f; background: #f4f6f2; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, input, select, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+
