@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { ApiService } from './api.service';
@@ -16,6 +16,10 @@ export class AppComponent implements OnInit {
   toast = '';
   modal: 'property' | 'payment' | 'group' | 'tax' | 'electricity' | 'collection' | 'expense' | 'tenant' | 'tenancy' | 'rate' | 'refund' | 'transfer' | null = null;
   selectedMonth = new Date().toISOString().slice(0, 7);
+  propertyViewMode: 'grid' | 'table' = 'grid';
+  dashboardGroupFilter: string = '';
+  dashboardSearch: string = '';
+  dashboardStatusFilter: 'all' | 'pending' | 'paid' = 'all';
   dashboard?: Dashboard;
   properties: Property[] = [];
   payments: Payment[] = [];
@@ -554,7 +558,7 @@ export class AppComponent implements OnInit {
   savePayment() { (this.editingPayment ? this.api.updateRecord('payments', this.editingPayment, this.paymentForm) : this.api.addPayment(this.paymentForm)).subscribe({ next: () => this.done('Rent payment saved'), error: err => this.error = err.error?.detail || 'Could not record payment' }); }
   removePayment(payment: Payment) { if (confirm(`Delete payment #${payment.id}?`)) this.api.deletePayment(payment.id).subscribe(() => this.done('Payment deleted')); }
   done(message: string) { this.modal = null; this.toast = message; this.loadAll(); setTimeout(() => this.toast = '', 2800); }
-  currency(value: number | null) { if (value === null) return 'Unknown'; return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value || 0); }
+  currency(value: number | null | undefined) { if (value === null || value === undefined) return 'Unknown'; return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value || 0); }
   get filteredProperties() { const q = this.search.toLowerCase(); return this.properties.filter(p => (!this.groupFilter || (this.groupFilter === 'ungrouped' ? !p.group_id : p.group_id === +this.groupFilter)) && (!q || [p.name, p.tenant_name, p.address, p.group_name].some(v => v?.toLowerCase().includes(q)))); }
   get filteredTenancies() {
     const q = this.tenancySearch.toLowerCase();
@@ -604,5 +608,47 @@ export class AppComponent implements OnInit {
     return Array.from(map.entries()).map(([category, stats]) => ({ category, ...stats })).sort((a, b) => b.total - a.total);
   }
   propertyTotalExpenses(propertyId: number): number { return this.expenses.filter(e => e.property_id === propertyId).reduce((sum, e) => sum + (e.amount || 0), 0); }
+
+  get groupSummaryStats() {
+    if (this.dashboard?.group_summaries && this.dashboard.group_summaries.length) {
+      return this.dashboard.group_summaries.map(g => ({
+        ...g,
+        totalUnits: g.total_units,
+        pendingCount: g.pending_count
+      }));
+    }
+    return this.groups.map(g => {
+      const props = this.properties.filter(p => p.group_id === g.id);
+      const pendings = (this.dashboard?.pending_properties || []).filter(p => p.group_id === g.id);
+      const expected = props.reduce((sum, p) => sum + (p.monthly_rent || 0), 0);
+      const pending = pendings.reduce((sum, p) => sum + ((p.monthly_rent || 0) - (p.amount_paid || 0)), 0);
+      const collected = Math.max(expected - pending, 0);
+      const rate = expected > 0 ? Math.round((collected / expected) * 100) : (props.length ? 100 : 0);
+      return {
+        ...g,
+        total_units: props.length,
+        totalUnits: props.length,
+        expected,
+        collected,
+        pending,
+        pending_count: pendings.length,
+        pendingCount: pendings.length,
+        rate
+      };
+    });
+  }
+
+  get filteredDashboardPending() {
+    return (this.dashboard?.pending_properties || []).filter(p => {
+      const matchGroup = !this.dashboardGroupFilter || String(p.group_id) === this.dashboardGroupFilter;
+      const q = this.dashboardSearch.toLowerCase();
+      const matchSearch = !q || [p.name, p.tenant_name, p.business_name, p.group_name].some(v => v?.toLowerCase().includes(q));
+      return matchGroup && matchSearch;
+    });
+  }
+
+  setDashboardGroup(groupId: string) {
+    this.dashboardGroupFilter = this.dashboardGroupFilter === groupId ? '' : groupId;
+  }
 }
 

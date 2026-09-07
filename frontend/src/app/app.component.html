@@ -1,23 +1,35 @@
 <div class="shell">
   <aside>
-    <div class="brand"><div class="brand-mark">R</div><div>Rent<span>Ledger</span></div></div>
+    <div class="brand">
+      <div class="brand-mark">R</div>
+      <div class="brand-title">Rent<span>Ledger</span></div>
+    </div>
     <nav>
-      <button [class.active]="view === 'dashboard'" (click)="setView('dashboard')"><span>⌂</span> Overview</button>
-      <button [class.active]="view === 'properties'" (click)="setView('properties')"><span>▦</span> Properties</button>
-      <button [class.active]="view === 'payments'" (click)="setView('payments')"><span>₹</span> Rent history</button>
-      <button [class.active]="view === 'expenses'" (click)="setView('expenses')"><span>🛠</span> Expenses & repairs</button>
-      <button [class.active]="view === 'groups'" (click)="setView('groups')"><span>▤</span> Groups & taxes</button>
-      <button [class.active]="view === 'electricity'" (click)="setView('electricity')"><span>ϟ</span> Electricity</button>
-      <button [class.active]="view === 'history'" (click)="setView('history')"><span>↺</span> Edit history</button>
-      <button [class.active]="view === 'tenants'" (click)="setView('tenants')"><span>♙</span> Tenants</button>
-      <button [class.active]="view === 'archive'" (click)="setView('archive')"><span>📖</span> Archive & books</button>
+      <button [class.active]="view === 'dashboard'" (click)="setView('dashboard')"><span class="icon">⌂</span> Overview</button>
+      <button [class.active]="view === 'properties'" (click)="setView('properties')"><span class="icon">▦</span> Properties</button>
+      <button [class.active]="view === 'payments'" (click)="setView('payments')"><span class="icon">₹</span> Rent history</button>
+      <button [class.active]="view === 'expenses'" (click)="setView('expenses')"><span class="icon">🛠</span> Expenses & repairs</button>
+      <button [class.active]="view === 'groups'" (click)="setView('groups')"><span class="icon">▤</span> Groups & taxes</button>
+      <button [class.active]="view === 'electricity'" (click)="setView('electricity')"><span class="icon">ϟ</span> Electricity</button>
+      <button [class.active]="view === 'history'" (click)="setView('history')"><span class="icon">↺</span> Edit history</button>
+      <button [class.active]="view === 'tenants'" (click)="setView('tenants')"><span class="icon">♙</span> Tenants</button>
+      <button [class.active]="view === 'archive'" (click)="setView('archive')"><span class="icon">📖</span> Archive & books</button>
     </nav>
-    <div class="side-footer"><div class="avatar">RT</div><div><strong>Property manager</strong><small>Local workspace</small></div></div>
+    <div class="side-footer">
+      <div class="avatar">RT</div>
+      <div>
+        <strong>Property manager</strong>
+        <small>Local workspace</small>
+      </div>
+    </div>
   </aside>
 
   <main>
     <header>
-      <div><p class="eyebrow">PROPERTY MANAGEMENT</p><h1>{{ view === 'dashboard' ? 'Good morning' : view === 'properties' ? 'Properties' : view === 'expenses' ? 'Property expenses' : view === 'groups' ? 'Groups & taxes' : view === 'electricity' ? 'Electricity' : view === 'history' ? 'Edit history' : view === 'tenants' ? 'Tenants & tenancies' : view === 'archive' ? 'Archive & books' : 'Rent history' }}</h1></div>
+      <div>
+        <p class="eyebrow">PROPERTY MANAGEMENT</p>
+        <h1>{{ view === 'dashboard' ? 'Good morning' : view === 'properties' ? 'Properties' : view === 'expenses' ? 'Property expenses' : view === 'groups' ? 'Groups & taxes' : view === 'electricity' ? 'Electricity' : view === 'history' ? 'Edit history' : view === 'tenants' ? 'Tenants & tenancies' : view === 'archive' ? 'Archive & books' : 'Rent history' }}</h1>
+      </div>
       <div class="header-actions">
         <a class="btn secondary" [href]="api.exportUrl()">⇩ Export Excel</a>
         <button *ngIf="view === 'expenses'" class="btn primary" (click)="openExpense()">＋ Record expense</button>
@@ -42,13 +54,70 @@
           </small>
         </label>
       </div>
+
       <p class="notice" *ngIf="dashboard.legacy_properties || dashboard.unassigned_payments">{{ dashboard.legacy_properties }} properties still use legacy rent details. {{ dashboard.unassigned_payments }} payments this month have no tenancy assigned. Add tenancy history and edit old payments to link them before relying on historical balances.</p>
       <article class="notice" *ngIf="dashboard.unknown_properties.length"><b>Historical totals are incomplete</b><p *ngFor="let p of dashboard.unknown_properties">{{ p.name }}: {{ p.reason }}.</p><p>These properties are excluded from expected rent and balances until the missing details are entered.</p></article>
+      
       <div class="stats">
         <article><div class="stat-icon green">₹</div><p>Collected for {{ selectedMonth | date:'MMM yyyy' }} stay</p><h3>{{ currency(dashboard.collected_rent) }}</h3><small><b>{{ dashboard.collection_rate }}%</b> of expected rent</small></article>
         <article><div class="stat-icon amber">◷</div><p>Pending rent</p><h3>{{ currency(dashboard.pending_rent) }}</h3><small>{{ dashboard.pending_properties.length }} properties pending</small></article>
         <article><div class="stat-icon blue">⌂</div><p>Properties charged</p><h3>{{ dashboard.total_properties }}</h3><small>{{ currency(dashboard.expected_rent) }} monthly value</small></article>
         <article><div class="stat-icon purple">◇</div><p>Advances held</p><h3>{{ currency(dashboard.total_advances) }}</h3><small>Total tenant deposits</small></article>
+      </div>
+
+      <!-- Group Performance Breakdown -->
+      <div *ngIf="groupSummaryStats.length" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div>
+            <h3 style="font-size: 15px; font-weight: 700; color: var(--ink-900); margin: 0;">Group performance breakdown</h3>
+            <p style="font-size: 12px; color: var(--ink-500); margin: 2px 0 0 0;">Rent collection status across your apartments and complexes for {{ selectedMonth | date:'MMM yyyy' }} stay</p>
+          </div>
+          <button *ngIf="dashboardGroupFilter" class="btn secondary" style="font-size: 11.5px; padding: 4px 10px;" (click)="dashboardGroupFilter = ''">
+            ✕ Clear group filter
+          </button>
+        </div>
+        <div class="group-summary-grid">
+          <div *ngFor="let g of groupSummaryStats" 
+               class="group-summary-card" 
+               [class.selected]="dashboardGroupFilter === '' + g.id"
+               (click)="setDashboardGroup('' + g.id)">
+            <div class="group-summary-header">
+              <div>
+                <div class="group-summary-title">
+                  <span>🏢</span> {{ g.name }}
+                  <span class="pill" style="font-size: 10px; padding: 2px 7px; background: var(--ink-100); color: var(--ink-700);">{{ g.kind || 'Group' }}</span>
+                </div>
+                <small style="color: var(--ink-500); font-size: 11px;">{{ g.totalUnits }} total units</small>
+              </div>
+              <span class="pill" [style.background]="g.rate >= 100 ? '#ecfdf5' : g.rate > 0 ? '#eff6ff' : '#fffbeb'" [style.color]="g.rate >= 100 ? '#059669' : g.rate > 0 ? '#2563eb' : '#d97706'">
+                {{ g.rate }}% collected
+              </span>
+            </div>
+            
+            <div class="group-summary-stats">
+              <div class="group-stat-col">
+                <small>Expected</small>
+                <b>{{ currency(g.expected) }}</b>
+              </div>
+              <div class="group-stat-col">
+                <small style="color: #059669;">Collected</small>
+                <b style="color: #059669;">{{ currency(g.collected) }}</b>
+              </div>
+              <div class="group-stat-col">
+                <small style="color: #d97706;">Pending</small>
+                <b style="color: #d97706;">{{ currency(g.pending) }}</b>
+              </div>
+            </div>
+
+            <div class="group-progress-bar">
+              <span [style.width.%]="g.rate"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: var(--ink-500);">
+              <span>{{ g.pendingCount ? g.pendingCount + ' unit(s) pending' : 'All units paid' }}</span>
+              <span style="font-weight: 600; color: var(--primary);">{{ dashboardGroupFilter === '' + g.id ? 'Filtered ✓' : 'Click to filter ›' }}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="grid">
@@ -66,10 +135,31 @@
             <h2>Rent due for {{ selectedMonth | date:'MMMM yyyy' }} stay</h2>
             <p>Properties with a balance for {{ selectedMonth | date:'MMMM yyyy' }} stay (typically collected by {{ getNextMonth(selectedMonth) | date:'MMMM yyyy' }})</p>
           </div>
-          <span class="pill">{{ dashboard.pending_properties.length }} pending</span>
+          <span class="pill">{{ filteredDashboardPending.length }} pending</span>
         </div>
-        <div class="empty" *ngIf="!dashboard.pending_properties.length && !dashboard.unknown_properties.length"><div>✓</div><h3>All caught up!</h3><p>Every property with known rent for {{ selectedMonth | date:'MMMM yyyy' }} stay is fully paid.</p></div>
-        <div class="table-wrap" *ngIf="dashboard.pending_properties.length">
+
+        <div style="padding: 10px 18px; background: #fafbfb; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div class="filter-chips" style="margin-bottom: 0;">
+            <button class="filter-chip" [class.active]="!dashboardGroupFilter" (click)="dashboardGroupFilter = ''">
+              All ({{ dashboard.pending_properties.length }})
+            </button>
+            <button *ngFor="let g of groups" class="filter-chip" [class.active]="dashboardGroupFilter === '' + g.id" (click)="setDashboardGroup('' + g.id)">
+              {{ g.name }}
+            </button>
+          </div>
+          <div class="search" style="min-width: 220px; padding: 4px 10px; background: #ffffff;">
+            ⌕ <input [(ngModel)]="dashboardSearch" placeholder="Search unit or tenant..." style="font-size: 12px;">
+          </div>
+        </div>
+
+        <div class="empty" *ngIf="!filteredDashboardPending.length && !dashboard.unknown_properties.length">
+          <div>✓</div>
+          <h3>All caught up!</h3>
+          <p *ngIf="!dashboard.pending_properties.length">Every property with known rent for {{ selectedMonth | date:'MMMM yyyy' }} stay is fully paid.</p>
+          <p *ngIf="dashboard.pending_properties.length">No pending properties match the current group or search filter.</p>
+        </div>
+
+        <div class="table-wrap" *ngIf="filteredDashboardPending.length">
           <table>
             <thead>
               <tr>
@@ -82,7 +172,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let p of dashboard.pending_properties">
+              <tr *ngFor="let p of filteredDashboardPending">
                 <td><b>{{ p.name }}</b><small>{{ p.group_name || 'Ungrouped' }} · {{ p.property_type || 'House' }}</small></td>
                 <td><span *ngIf="p.business_name && p.property_type === 'Shop'"><b>{{ p.business_name }}</b> <small>({{ p.tenant_name || 'Vacant' }})</small></span><span *ngIf="!p.business_name || p.property_type !== 'Shop'">{{ p.tenant_name || 'Vacant' }}</span></td>
                 <td>
@@ -100,10 +190,109 @@
     </section>
 
     <section *ngIf="!loading && view === 'properties'" class="page">
-      <div class="toolbar"><div><h2>Your portfolio</h2><p>{{ filteredProperties.length }} properties across {{ groups.length }} groups</p></div><div class="toolbar-actions"><button class="btn secondary" (click)="openGroup()">＋ Group</button><button class="btn primary" (click)="openProperty()">＋ Add property</button></div></div>
-      <div class="filters"><label class="search">⌕<input [(ngModel)]="search" placeholder="Search property, tenant or address"></label></div>
-      <div class="filters"><select aria-label="Property group" [(ngModel)]="groupFilter"><option value="">All groups</option><option value="ungrouped">Ungrouped</option><option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option></select></div>
-      <div class="property-grid"><article class="property-card" *ngFor="let p of filteredProperties"><div class="property-top"><div class="building">{{ propertyTypeIcon(p.property_type) }}</div><span [class.inactive]="!p.active">{{ p.active ? 'Active' : 'Inactive' }}</span></div><h3>{{ p.name }} <small style="font-size: 0.75rem; font-weight: 600; color: #4b5563; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">{{ p.property_type || 'House' }}</small></h3><p class="location">{{ p.group_name || 'Ungrouped' }} · EB: {{ p.electricity_payer === 'Owner' ? 'Owner pays and collects' : 'Tenant pays directly' }}</p><div class="tenant"><small>TENANT</small><b *ngIf="p.business_name && p.property_type === 'Shop'"><span style="color: #2563eb; font-weight: 700;">🏪 {{ p.business_name }}</span><br><span style="font-size: 0.85em; font-weight: 500; color: #475569;">({{ p.tenant_name || 'Vacant property' }})</span></b><b *ngIf="!p.business_name || p.property_type !== 'Shop'">{{ p.tenant_name || 'Vacant property' }}</b><span>{{ p.tenant_phone || 'No phone number' }}</span></div><div class="money-row"><div><small>MONTHLY RENT</small><b>{{ currency(p.monthly_rent) }}</b></div><div><small>ADVANCE</small><b>{{ currency(p.advance_paid) }}</b></div></div><div *ngIf="propertyTotalExpenses(p.id) > 0" style="margin-top: 8px; font-size: 0.8rem; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">🛠 <b>Expenses logged:</b> {{ currency(propertyTotalExpenses(p.id)) }}</div><footer><button (click)="openProperty(p)">Edit details</button><button class="pay" (click)="openPayment(p)">Record rent</button><button *ngIf="p.has_tenancy_history" (click)="openPropertyTransfer(p)" title="Transfer tenancy to another tenant">⇄ Transfer</button><button (click)="openExpense(p.id)">＋ Expense</button><button class="delete-group" (click)="removeProperty(p)" [attr.aria-label]="'Delete property ' + p.name">Delete</button></footer></article></div>
+      <div class="toolbar">
+        <div>
+          <h2>Your portfolio</h2>
+          <p>{{ filteredProperties.length }} properties across {{ groups.length }} groups</p>
+        </div>
+        <div class="toolbar-actions">
+          <div class="view-mode-toggle">
+            <button [class.active]="propertyViewMode === 'grid'" (click)="propertyViewMode = 'grid'" title="Grid Cards View">⊞ Cards</button>
+            <button [class.active]="propertyViewMode === 'table'" (click)="propertyViewMode = 'table'" title="Compact Table View">☰ Table</button>
+          </div>
+          <button class="btn secondary" (click)="openGroup()">＋ Group</button>
+          <button class="btn primary" (click)="openProperty()">＋ Add property</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <label class="search">⌕<input [(ngModel)]="search" placeholder="Search property, tenant, shop or address"></label>
+        <select aria-label="Property group" [(ngModel)]="groupFilter">
+          <option value="">All groups</option>
+          <option value="ungrouped">Ungrouped</option>
+          <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
+        </select>
+        <button *ngIf="groupFilter || search" class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" (click)="groupFilter=''; search=''">Reset</button>
+      </div>
+
+      <!-- Grid Cards View -->
+      <div class="property-grid" *ngIf="propertyViewMode === 'grid'">
+        <article class="property-card" *ngFor="let p of filteredProperties">
+          <div class="property-top">
+            <div class="building">{{ propertyTypeIcon(p.property_type) }}</div>
+            <span [class.inactive]="!p.active">{{ p.active ? 'Active' : 'Inactive' }}</span>
+          </div>
+          <h3>{{ p.name }} <small style="font-size: 0.75rem; font-weight: 600; color: #4b5563; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">{{ p.property_type || 'House' }}</small></h3>
+          <p class="location">{{ p.group_name || 'Ungrouped' }} · EB: {{ p.electricity_payer === 'Owner' ? 'Owner pays and collects' : 'Tenant pays directly' }}</p>
+          <div class="tenant">
+            <small>TENANT</small>
+            <b *ngIf="p.business_name && p.property_type === 'Shop'">
+              <span style="color: #2563eb; font-weight: 700;">🏪 {{ p.business_name }}</span><br>
+              <span style="font-size: 0.85em; font-weight: 500; color: #475569;">({{ p.tenant_name || 'Vacant property' }})</span>
+            </b>
+            <b *ngIf="!p.business_name || p.property_type !== 'Shop'">{{ p.tenant_name || 'Vacant property' }}</b>
+            <span>{{ p.tenant_phone || 'No phone number' }}</span>
+          </div>
+          <div class="money-row">
+            <div><small>MONTHLY RENT</small><b>{{ currency(p.monthly_rent) }}</b></div>
+            <div><small>ADVANCE</small><b>{{ currency(p.advance_paid) }}</b></div>
+          </div>
+          <div *ngIf="propertyTotalExpenses(p.id) > 0" style="margin-top: 10px; font-size: 0.8rem; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; padding: 5px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+            🛠 <b>Expenses logged:</b> {{ currency(propertyTotalExpenses(p.id)) }}
+          </div>
+          <footer>
+            <button (click)="openProperty(p)">Edit details</button>
+            <button class="pay" (click)="openPayment(p)">Record rent</button>
+            <button *ngIf="p.has_tenancy_history" (click)="openPropertyTransfer(p)" title="Transfer tenancy to another tenant">⇄ Transfer</button>
+            <button (click)="openExpense(p.id)">＋ Expense</button>
+            <button class="delete-group" (click)="removeProperty(p)" [attr.aria-label]="'Delete property ' + p.name">Delete</button>
+          </footer>
+        </article>
+      </div>
+
+      <!-- Compact Table View -->
+      <article class="card table-card" *ngIf="propertyViewMode === 'table' && filteredProperties.length">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Type</th>
+                <th>Group</th>
+                <th>Tenant / Business</th>
+                <th>Monthly Rent</th>
+                <th>Advance Held</th>
+                <th>EB Setup</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of filteredProperties">
+                <td><b>{{ p.name }}</b><small>{{ p.address || '—' }}</small></td>
+                <td><span class="pill" style="background: var(--ink-100); color: var(--ink-700);">{{ p.property_type || 'House' }}</span></td>
+                <td>{{ p.group_name || 'Ungrouped' }}</td>
+                <td>
+                  <span *ngIf="p.business_name && p.property_type === 'Shop'"><b>{{ p.business_name }}</b> <small>({{ p.tenant_name || 'Vacant' }})</small></span>
+                  <span *ngIf="!p.business_name || p.property_type !== 'Shop'">{{ p.tenant_name || 'Vacant' }}</span>
+                  <small *ngIf="p.tenant_phone">{{ p.tenant_phone }}</small>
+                </td>
+                <td class="amount">{{ currency(p.monthly_rent) }}</td>
+                <td>{{ currency(p.advance_paid) }}</td>
+                <td><small>{{ p.electricity_payer === 'Owner' ? 'Owner pays' : 'Tenant pays' }}</small></td>
+                <td><span class="pill" [style.background]="p.active ? '#ecfdf5' : '#f1f5f9'" [style.color]="p.active ? '#059669' : '#64748b'">{{ p.active ? 'Active' : 'Inactive' }}</span></td>
+                <td>
+                  <button class="text-btn" (click)="openProperty(p)">Edit</button>
+                  <button class="text-btn" style="margin-left: 4px;" (click)="openPayment(p)">Rent</button>
+                  <button *ngIf="p.has_tenancy_history" class="text-btn" style="margin-left: 4px; background: #eff6ff; color: #1d4ed8;" (click)="openPropertyTransfer(p)">Transfer</button>
+                  <button class="text-btn" style="margin-left: 4px; background: #fffbeb; color: #b45309;" (click)="openExpense(p.id)">Expense</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
       <div class="empty card" *ngIf="!filteredProperties.length"><div>⌂</div><h3>No properties found</h3><p>Add your first property or change the current filters.</p></div>
     </section>
 
@@ -755,7 +944,7 @@
 
       <div class="modal-actions">
         <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
-        <button class="btn primary" [disabled]="trf.invalid || (!transferForm.new_tenant_id && !transferForm.new_tenant_name?.trim())">
+        <button class="btn primary" [disabled]="trf.invalid || (!transferForm.new_tenant_id && !transferForm.new_tenant_name.trim())">
           Complete Transfer & Takeover
         </button>
       </div>

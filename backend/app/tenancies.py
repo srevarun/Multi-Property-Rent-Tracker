@@ -306,7 +306,7 @@ def monthly_dashboard(month: Optional[str] = None):
         month = date.today().strftime("%Y-%m")
     month_valid(month)
     with db() as con:
-        expected = records(con.execute('''SELECT p.id,p.name,p.property_type,p.due_day,g.name AS group_name,
+        expected = records(con.execute('''SELECT p.id,p.name,p.property_type,p.due_day,p.group_id,g.name AS group_name,
             t.id AS tenancy_id,n.name AS tenant_name,t.business_name,t.deposit AS advance_paid,t.start_date,
             (SELECT MIN(effective_month) FROM rent_rates WHERE tenancy_id=t.id) AS first_rate_month,
             (SELECT MIN(rental_month) FROM rent_payments WHERE tenancy_id=t.id) AS first_payment_month,
@@ -316,7 +316,7 @@ def monthly_dashboard(month: Optional[str] = None):
             LEFT JOIN property_groups g ON g.id=p.group_id
             WHERE substr(t.start_date,1,7)<=? AND substr(COALESCE(t.end_date,'9999-12'),1,7)>=?''',(month,month,month,month)))
         # Preserve the old ledger until each property's historical tenancy is supplied.
-        legacy=records(con.execute('''SELECT p.id,p.name,p.property_type,p.due_day,g.name AS group_name,NULL AS tenancy_id,
+        legacy=records(con.execute('''SELECT p.id,p.name,p.property_type,p.due_day,p.group_id,g.name AS group_name,NULL AS tenancy_id,
             p.tenant_name,'' AS business_name,p.advance_paid,p.monthly_rent,
             COALESCE((SELECT SUM(amount) FROM rent_payments WHERE property_id=p.id AND tenancy_id IS NULL AND rental_month=?),0) AS amount_paid
             FROM properties p LEFT JOIN property_groups g ON g.id=p.group_id
@@ -351,8 +351,31 @@ def monthly_dashboard(month: Optional[str] = None):
         collected=con.execute('SELECT COALESCE(SUM(amount),0) FROM rent_payments WHERE rental_month=?',(month,)).fetchone()[0]
         unassigned=con.execute('SELECT COUNT(*) FROM rent_payments WHERE rental_month=? AND tenancy_id IS NULL',(month,)).fetchone()[0]
         credited=sum(min(r['amount_paid'],r['monthly_rent']) for r in entries)
+        
+        all_groups = records(con.execute("SELECT id, name, kind FROM property_groups ORDER BY name"))
+        group_summaries = []
+        for g in all_groups:
+            g_props = [r for r in entries if r.get('group_id') == g['id']]
+            g_expected = sum(r['monthly_rent'] for r in g_props)
+            g_collected = sum(min(r['amount_paid'], r['monthly_rent']) for r in g_props)
+            g_pending = sum(max(r['monthly_rent'] - r['amount_paid'], 0) for r in g_props)
+            g_rate = round(g_collected / g_expected * 100, 1) if g_expected else 0.0
+            g_pendings = [r for r in g_props if r['amount_paid'] < r['monthly_rent']]
+            group_summaries.append({
+                'id': g['id'],
+                'name': g['name'],
+                'kind': g['kind'],
+                'total_units': len(g_props),
+                'expected': g_expected,
+                'collected': g_collected,
+                'pending': g_pending,
+                'pending_count': len(g_pendings),
+                'rate': g_rate
+            })
+
         return dict(month=month,total_properties=len(entries),expected_rent=total,collected_rent=collected,
             pending_rent=sum(max(r['monthly_rent']-r['amount_paid'],0) for r in entries),
             total_advances=sum(r['advance_paid'] for r in entries), collection_rate=round(credited/total*100,1) if total else 0,
             pending_properties=sorted([r for r in entries if r['amount_paid']<r['monthly_rent']],key=lambda r:(r['due_day'],r['name'])),
+            group_summaries=group_summaries,
             legacy_properties=len(legacy),unassigned_payments=unassigned, unknown_properties=uncertain, before_tracking=before_tracking)
