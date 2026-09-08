@@ -78,9 +78,23 @@ export interface GoogleDriveConfigModel {
   masked_access_token: string;
   folder_id: string;
   folder_name: string;
-  local_drive_path: string;
+  local_drive_path?: string;
   last_backup_at: string;
   last_backup_status: string;
 }
+
+export interface AuthUser {
+  id: number;
+  username: string;
+  full_name: string;
+  role: string;
+}
+
+export interface LoginResult {
+  status: string;
+  token: string;
+  user: AuthUser;
+}
+
 
 

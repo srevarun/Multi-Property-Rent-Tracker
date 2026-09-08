@@ -1,4 +1,11 @@
-<div class="shell">
+<div *ngIf="authChecking" class="state" style="min-height: 100vh;">
+  <div class="spinner"></div>
+  Authenticating secure session…
+</div>
+
+<app-login-board *ngIf="!authChecking && !isAuthenticated" (loggedIn)="onLoginSuccess($event)"></app-login-board>
+
+<div class="shell" *ngIf="!authChecking && isAuthenticated">
   <aside>
     <div class="brand">
       <div class="brand-mark">R</div>
@@ -16,11 +23,12 @@
       <button [class.active]="view === 'archive'" (click)="setView('archive')"><span class="icon">📖</span> Archive & books</button>
     </nav>
     <div class="side-footer">
-      <div class="avatar">RT</div>
-      <div>
-        <strong>Property manager</strong>
-        <small>Local workspace</small>
+      <div class="avatar">{{ (currentUser?.full_name || 'Srevarun Somasundaram').slice(0, 2).toUpperCase() }}</div>
+      <div style="flex: 1; min-width: 0;">
+        <strong style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ currentUser?.full_name || 'Srevarun Somasundaram' }}</strong>
+        <small>&#64;{{ currentUser?.username || 'srevarun' }}</small>
       </div>
+      <button type="button" class="icon-btn" (click)="logout()" title="Log out" style="color: #94a3b8; font-size: 16px;">🚪</button>
     </div>
   </aside>
 

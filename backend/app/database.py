@@ -211,7 +211,36 @@ def init_db() -> None:
                 file_id TEXT DEFAULT '',
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                full_name TEXT NOT NULL DEFAULT '',
+                role TEXT NOT NULL DEFAULT 'owner',
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS user_sessions (
+                token TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                expires_at TEXT NOT NULL
+            );
         """)
+
+        # Seed initial user 'srevarun' if not present
+        if not connection.execute("SELECT 1 FROM users WHERE username = 'srevarun'").fetchone():
+            import hashlib
+            import secrets
+            salt = secrets.token_hex(16)
+            key = hashlib.pbkdf2_hmac("sha256", "abcd1234".encode("utf-8"), salt.encode("utf-8"), 100000)
+            pwd_hash = f"{salt}${key.hex()}"
+            connection.execute(
+                "INSERT INTO users (username, password_hash, full_name, role) VALUES (?, ?, ?, ?)",
+                ("srevarun", pwd_hash, "Srevarun Somasundaram", "owner")
+            )
+
         refund_columns = {row['name'] for row in connection.execute('PRAGMA table_info(deposit_refunds)')}
         if 'is_final_settlement' not in refund_columns:
             connection.execute("ALTER TABLE deposit_refunds ADD COLUMN is_final_settlement INTEGER NOT NULL DEFAULT 0")

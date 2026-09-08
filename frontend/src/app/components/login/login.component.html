@@ -1,0 +1,94 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <!-- Brand Header -->
+    <div class="login-header">
+      <div class="brand-mark login-brand-mark">R</div>
+      <h2>Rent<span>Ledger</span></h2>
+      <p>Property Management & Rent Collection</p>
+    </div>
+
+    <!-- Error Alert -->
+    <div *ngIf="error" class="login-error-alert">
+      <span>⚠ {{ error }}</span>
+      <button type="button" (click)="error = ''">×</button>
+    </div>
+
+    <!-- Login Form -->
+    <form (ngSubmit)="onSubmit()" class="login-form">
+      <div class="login-field">
+        <label for="login-username">Username or Email</label>
+        <div class="input-with-icon">
+          <span class="field-icon">👤</span>
+          <input
+            id="login-username"
+            type="text"
+            required
+            autocomplete="username"
+            placeholder="e.g. srevarun"
+            [(ngModel)]="username"
+            name="username"
+            [disabled]="loading" />
+        </div>
+      </div>
+
+      <div class="login-field">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+          <label for="login-password" style="margin: 0;">Password</label>
+          <button
+            type="button"
+            class="text-btn"
+            style="padding: 0; background: transparent; font-size: 11px; text-transform: none;"
+            (click)="showPassword = !showPassword">
+            {{ showPassword ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+        <div class="input-with-icon">
+          <span class="field-icon">🔒</span>
+          <input
+            id="login-password"
+            [type]="showPassword ? 'text' : 'password'"
+            required
+            autocomplete="current-password"
+            placeholder="••••••••"
+            [(ngModel)]="password"
+            name="password"
+            [disabled]="loading" />
+        </div>
+      </div>
+
+      <div class="login-options">
+        <label class="check">
+          <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" [disabled]="loading" />
+          <span>Keep me signed in</span>
+        </label>
+      </div>
+
+      <button type="submit" class="btn primary login-submit-btn" [disabled]="loading || !username || !password">
+        <span *ngIf="!loading">Sign In to Dashboard →</span>
+        <span *ngIf="loading" style="display: inline-flex; align-items: center; gap: 8px;">
+          <span class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></span> Signing in…
+        </span>
+      </button>
+    </form>
+
+    <!-- Quick Credentials Helper Box -->
+    <div class="login-quick-helper">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 700; color: #1e293b; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px;">
+          Default Access Credentials
+        </span>
+        <button type="button" class="text-btn" style="font-size: 11px; padding: 2px 8px;" (click)="fillDefaults()">
+          ⚡ Quick Auto-Fill
+        </button>
+      </div>
+      <div style="display: flex; gap: 16px; margin-top: 6px; font-size: 12px; color: #475569;">
+        <span>User: <b style="color: #059669; font-family: monospace;">srevarun</b></span>
+        <span>Pass: <b style="color: #059669; font-family: monospace;">abcd1234</b></span>
+      </div>
+    </div>
+
+    <div class="login-footer">
+      <small>🔒 Secure session & encrypted database storage · RentLedger v1.0</small>
+    </div>
+  </div>
+</div>

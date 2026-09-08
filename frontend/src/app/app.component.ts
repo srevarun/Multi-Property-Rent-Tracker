@@ -13,9 +13,11 @@ import { ExpensesComponent } from './components/expenses/expenses.component';
 import { TenantsComponent } from './components/tenants/tenants.component';
 import { HistoryComponent } from './components/history/history.component';
 import { BackupModalComponent } from './components/backup/backup-modal.component';
+import { LoginComponent } from './components/login/login.component';
 import {
   Dashboard, Payment, Property, PropertyGroup, GroupTax,
-  ElectricityBill, PropertyExpense, EditHistory, Tenant, Tenancy, RentRate, DepositRefund
+  ElectricityBill, PropertyExpense, EditHistory, Tenant, Tenancy, RentRate, DepositRefund,
+  AuthUser
 } from './models';
 
 type View = 'tenants' | 'history' | 'dashboard' | 'properties' | 'payments' | 'groups' | 'electricity' | 'expenses' | 'archive';
@@ -36,13 +38,17 @@ type View = 'tenants' | 'history' | 'dashboard' | 'properties' | 'payments' | 'g
     ExpensesComponent,
     TenantsComponent,
     HistoryComponent,
-    BackupModalComponent
+    BackupModalComponent,
+    LoginComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
   view: View = 'dashboard';
+  isAuthenticated = false;
+  authChecking = true;
+  currentUser: AuthUser | null = null;
   loading = true;
   error = '';
   toast = '';
@@ -90,7 +96,55 @@ export class AppComponent implements OnInit {
   constructor(public api: ApiService) {}
 
   ngOnInit() {
+    this.checkSession();
+  }
+
+  checkSession() {
+    this.authChecking = true;
+    const token = this.api.getAuthToken();
+    if (!token) {
+      this.isAuthenticated = false;
+      this.authChecking = false;
+      this.loading = false;
+      return;
+    }
+
+    this.api.getMe().subscribe({
+      next: res => {
+        this.currentUser = res.user;
+        this.isAuthenticated = true;
+        this.authChecking = false;
+        this.loadAll();
+      },
+      error: () => {
+        this.api.clearAuth();
+        this.isAuthenticated = false;
+        this.authChecking = false;
+        this.loading = false;
+      }
+    });
+  }
+
+  onLoginSuccess(user: AuthUser) {
+    this.currentUser = user;
+    this.isAuthenticated = true;
+    this.authChecking = false;
     this.loadAll();
+  }
+
+  logout() {
+    this.api.logout().subscribe({
+      next: () => {
+        this.api.clearAuth();
+        this.isAuthenticated = false;
+        this.currentUser = null;
+      },
+      error: () => {
+        this.api.clearAuth();
+        this.isAuthenticated = false;
+        this.currentUser = null;
+      }
+    });
   }
 
   get dashboardStayMonth(): string {

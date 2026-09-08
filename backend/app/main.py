@@ -12,6 +12,7 @@ from .routers.electricity import router as electricity_router, list_electricity,
 from .routers.expenses import router as expenses_router, list_expenses, get_expenses, create_expense, edit_expense, delete_expense
 from .routers.history_export import router as history_export_router, list_edit_history, export_excel
 from .routers.backup import router as backup_router, get_backup_status, download_database_snapshot, upload_backup_to_google_drive, save_google_drive_config, get_google_drive_config
+from .routers.auth import router as auth_router, login, get_me, logout, change_password
 
 app = FastAPI(title="Rent Ledger API", version="1.0.0")
 
@@ -35,6 +36,7 @@ app.include_router(history_export_router)
 app.include_router(tenancy_router)
 app.include_router(archive_router)
 app.include_router(backup_router)
+app.include_router(auth_router)
 
 
 @app.on_event("startup")
