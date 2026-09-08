@@ -1,5 +1,5 @@
-<div class="cyber-login-universe">
-  <!-- Interactive Neural Particle Vector Canvas -->
+<div class="cyber-login-universe" [attr.data-theme]="currentTheme">
+  <!-- Interactive Neural / Warp / Matrix Canvas -->
   <canvas #cyberCanvas class="cyber-canvas"></canvas>
 
   <!-- Ambient Holographic Grid & Radial Lighting -->
@@ -10,22 +10,74 @@
 
   <!-- Top Cyber HUD Telemetry Bar -->
   <div class="cyber-hud-topbar">
-    <div class="hud-item">
-      <span class="hud-dot live-pulse"></span>
-      <span class="hud-label">CORE:</span>
-      <span class="hud-value">ONLINE // NODE_01</span>
+    <!-- Left: Core Status & Audio Synthesizer Toggle -->
+    <div class="hud-group">
+      <div class="hud-item">
+        <span class="hud-dot live-pulse"></span>
+        <span class="hud-label">CORE:</span>
+        <span class="hud-value">ONLINE // NODE_01</span>
+      </div>
+      <button
+        type="button"
+        class="hud-btn"
+        (click)="toggleAudio()"
+        [title]="audioMuted ? 'Engage Cyber Audio Synthesizer' : 'Mute Cyber Audio'">
+        <span class="hud-icon">{{ audioMuted ? '🔇' : '🔊' }}</span>
+        <span>AUDIO: {{ audioMuted ? 'OFF' : 'SYNTH' }}</span>
+      </button>
     </div>
-    <div class="hud-item hide-mobile">
-      <span class="hud-label">PROTOCOL:</span>
-      <span class="hud-value">TLS-v1.3 // PBKDF2-256</span>
+
+    <!-- Center: Visualizer Mode & Theme Spectrum Switchers -->
+    <div class="hud-group center-group hide-mobile">
+      <div class="hud-pill-selector">
+        <span class="hud-label" style="margin-right: 4px;">VISUAL:</span>
+        <button
+          type="button"
+          class="hud-pill"
+          [class.active]="visualizerMode === 'neural'"
+          (click)="setVisualizerMode('neural')">NEURAL</button>
+        <button
+          type="button"
+          class="hud-pill"
+          [class.active]="visualizerMode === 'warp'"
+          (click)="setVisualizerMode('warp')">WARP</button>
+        <button
+          type="button"
+          class="hud-pill"
+          [class.active]="visualizerMode === 'matrix'"
+          (click)="setVisualizerMode('matrix')">MATRIX</button>
+      </div>
+
+      <div class="hud-pill-selector">
+        <span class="hud-label" style="margin-right: 4px;">SPECTRUM:</span>
+        <button
+          type="button"
+          class="hud-pill dot-emerald"
+          [class.active]="currentTheme === 'emerald'"
+          (click)="setTheme('emerald')">JADE</button>
+        <button
+          type="button"
+          class="hud-pill dot-cyberpunk"
+          [class.active]="currentTheme === 'cyberpunk'"
+          (click)="setTheme('cyberpunk')">CYBER</button>
+        <button
+          type="button"
+          class="hud-pill dot-quantum"
+          [class.active]="currentTheme === 'quantum'"
+          (click)="setTheme('quantum')">ICE</button>
+      </div>
     </div>
-    <div class="hud-item hide-mobile">
-      <span class="hud-label">LATENCY:</span>
-      <span class="hud-value">{{ networkLatency }}</span>
-    </div>
-    <div class="hud-item">
-      <span class="hud-label">UTC_CLOCK:</span>
-      <span class="hud-value hud-clock">{{ liveTime }}</span>
+
+    <!-- Right: Latency & Digital Clock -->
+    <div class="hud-group">
+      <div class="hud-item hide-mobile">
+        <span class="hud-label">PING:</span>
+        <span class="hud-value">{{ networkLatency }}</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">UTC:</span>
+        <span class="hud-value hud-clock">{{ liveTime }}</span>
+      </div>
     </div>
   </div>
 
@@ -55,17 +107,42 @@
 
       <!-- Card Top Brand & Orbital Ring -->
       <div class="cyber-brand-section">
-        <div class="cyber-orbital-badge">
+        <div class="cyber-orbital-badge" (mouseenter)="scrambleBrandTitle()">
           <div class="orbital-ring ring-1"></div>
           <div class="orbital-ring ring-2"></div>
           <div class="orbital-core">R</div>
         </div>
 
         <div class="cyber-title-group">
-          <div class="cyber-pre-title">QUANTUM LEDGER SYSTEM</div>
-          <h1 class="cyber-brand-title">Rent<span>Ledger</span></h1>
+          <div class="cyber-pre-title">QUANTUM LEDGER SYSTEM // v2.5</div>
+          <h1
+            class="cyber-brand-title"
+            (mouseenter)="scrambleBrandTitle()"
+            title="Hover to run cipher scramble">
+            {{ brandTitleDisplay }}
+          </h1>
           <p class="cyber-subtitle">High-Security Asset & Rent Intelligence</p>
         </div>
+      </div>
+
+      <!-- Auth Mode Switcher Tab Bar -->
+      <div class="auth-mode-tabs">
+        <button
+          type="button"
+          class="auth-tab"
+          [class.active]="authMode === 'cipher'"
+          (click)="setAuthMode('cipher')">
+          <span class="tab-icon">⎔</span>
+          <span>CIPHER KEYPAD</span>
+        </button>
+        <button
+          type="button"
+          class="auth-tab"
+          [class.active]="authMode === 'biometric'"
+          (click)="setAuthMode('biometric')">
+          <span class="tab-icon">⏣</span>
+          <span>NEURAL BIOMETRIC</span>
+        </button>
       </div>
 
       <!-- Error / Diagnostic Glitch Alert -->
@@ -78,16 +155,16 @@
         <button type="button" class="alert-close" (click)="error = ''">✕</button>
       </div>
 
-      <!-- Cyber Login Form -->
-      <form (ngSubmit)="onSubmit()" class="cyber-form">
+      <!-- MODE 1: CIPHER KEYPAD FORM -->
+      <form *ngIf="authMode === 'cipher'" (ngSubmit)="onSubmit()" class="cyber-form">
         <!-- Username Field -->
         <div class="cyber-field">
           <div class="cyber-label-row">
-            <label for="cyber-username">IDENTITY KEY // USERNAME</label>
+            <label for="cyber-username">OPERATOR IDENTITY // USERNAME</label>
             <span class="field-hud-tag">ID:SEC-01</span>
           </div>
           <div class="cyber-input-wrap">
-            <span class="cyber-input-icon">⎔</span>
+            <span class="cyber-input-icon">👤</span>
             <input
               id="cyber-username"
               type="text"
@@ -95,40 +172,43 @@
               autocomplete="username"
               placeholder="Enter operator identity"
               [(ngModel)]="username"
+              (focus)="playFocusSound()"
+              (keydown)="playClickSound()"
               name="username"
               [disabled]="loading" />
             <div class="cyber-input-corner"></div>
           </div>
         </div>
 
-        <!-- Password Field with Cyber Entropy Meter -->
+        <!-- Password Field with Cyber Entropy Analyzer -->
         <div class="cyber-field">
           <div class="cyber-label-row">
             <label for="cyber-password">ACCESS CIPHER // PASSKEY</label>
             <button
               type="button"
               class="cyber-toggle-pass"
-              (click)="showPassword = !showPassword"
+              (click)="showPassword = !showPassword; playApertureSound()"
               tabindex="-1">
               {{ showPassword ? 'OPTIC: REVEAL' : 'OPTIC: MASK' }}
             </button>
           </div>
           <div class="cyber-input-wrap">
-            <span class="cyber-input-icon">⏣</span>
+            <span class="cyber-input-icon">🔒</span>
             <input
               id="cyber-password"
               [type]="showPassword ? 'text' : 'password'"
               required
               autocomplete="current-password"
-              placeholder="Enter cryptographic key"
+              placeholder="Enter cryptographic passkey"
               [(ngModel)]="password"
+              (focus)="playFocusSound()"
               (input)="onPasswordChange()"
               name="password"
               [disabled]="loading" />
             <div class="cyber-input-corner"></div>
           </div>
 
-          <!-- Live Quantum Entropy Meter -->
+          <!-- Comprehensive Quantum Entropy Breakdown -->
           <div class="quantum-entropy-bar" *ngIf="password">
             <div class="entropy-track">
               <div class="entropy-segment" [class.active]="quantumEntropy >= 25" [style.background]="entropyColor"></div>
@@ -136,8 +216,16 @@
               <div class="entropy-segment" [class.active]="quantumEntropy >= 75" [style.background]="entropyColor"></div>
               <div class="entropy-segment" [class.active]="quantumEntropy >= 90" [style.background]="entropyColor"></div>
             </div>
-            <div class="entropy-status" [style.color]="entropyColor">
-              <span>CIPHER STRENGTH:</span> <b>{{ entropyLabel }}</b>
+            <div class="entropy-stats-row">
+              <span class="stat-cell" [style.color]="entropyColor">
+                ◈ <b>{{ entropyLabel }}</b>
+              </span>
+              <span class="stat-cell">
+                ENTROPY: <b>{{ entropyBits }} BITS</b>
+              </span>
+              <span class="stat-cell">
+                CRACK TIME: <b>{{ crackTimeEst }}</b>
+              </span>
             </div>
           </div>
         </div>
@@ -155,6 +243,7 @@
         <button
           type="submit"
           class="cyber-submit-btn"
+          (mouseenter)="playHoverSound()"
           [disabled]="loading || !username || !password">
           <div class="btn-glow-layer"></div>
           <div class="btn-scan-border"></div>
@@ -172,6 +261,57 @@
         </button>
       </form>
 
+      <!-- MODE 2: QUANTUM NEURAL BIOMETRIC SCANNER -->
+      <div *ngIf="authMode === 'biometric'" class="biometric-panel">
+        <div class="biometric-pad-container" [class.scanning]="biometricScanning">
+          <div class="biometric-ring-outer"></div>
+          <div class="biometric-ring-inner"></div>
+
+          <!-- Circular SVG Progress Ring -->
+          <svg class="biometric-svg" viewBox="0 0 120 120">
+            <circle class="bio-bg-circle" cx="60" cy="60" r="52"></circle>
+            <circle
+              class="bio-progress-circle"
+              cx="60"
+              cy="60"
+              r="52"
+              [style.strokeDashoffset]="326.7 - (326.7 * biometricProgress) / 100">
+            </circle>
+          </svg>
+
+          <!-- Holographic Fingerprint Reticle -->
+          <div class="biometric-sensor-core">
+            <div class="bio-icon">🫵</div>
+            <div *ngIf="biometricScanning" class="bio-scanline"></div>
+          </div>
+        </div>
+
+        <!-- Biometric Status Feed -->
+        <div class="biometric-readout">
+          <div class="readout-title">NEURAL HANDSHAKE PROBE</div>
+          <div class="readout-status">{{ biometricStatus }}</div>
+          <div class="readout-bar">
+            <div class="readout-fill" [style.width.%]="biometricProgress"></div>
+          </div>
+        </div>
+
+        <!-- Biometric Action Buttons -->
+        <div class="biometric-actions">
+          <button
+            type="button"
+            class="cyber-submit-btn bio-btn"
+            (mousedown)="startBiometricScan()"
+            (mouseup)="abortBiometricScan()"
+            (mouseleave)="abortBiometricScan()"
+            (touchstart)="startBiometricScan()"
+            (touchend)="abortBiometricScan()"
+            [disabled]="loading">
+            <span class="btn-icon">⏣</span>
+            <span class="btn-text">{{ biometricScanning ? 'HOLD TO COMPLETE SYNC…' : 'HOLD TO RUN NEURAL SCAN' }}</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Bottom Card Diagnostics Footer -->
       <div class="cyber-card-footer">
         <div class="footer-badge">
@@ -186,10 +326,35 @@
     </div>
   </div>
 
-  <!-- Bottom Floating Coordinates & Version HUD -->
+  <!-- Bottom HUD Bar with Expandable Telemetry Console Trigger -->
   <div class="cyber-hud-bottombar">
-    <span>SYSTEM: RENTLEDGER-TX9000</span>
-    <span class="hide-mobile">SECURE PORTAL v2.5 // QUANTUM UI</span>
-    <span>ALL CHANNELS ENCRYPTED</span>
+    <div class="bottom-left">
+      <span>SYSTEM: RENTLEDGER-TX9000</span>
+      <span class="hide-mobile">SECURE PORTAL v2.5 // QUANTUM UI</span>
+    </div>
+
+    <button type="button" class="hud-terminal-trigger" (click)="toggleTerminal()">
+      <span class="hud-term-icon">{{ showTerminal ? '▼' : '▲' }}</span>
+      <span>{{ showTerminal ? 'COLLAPSE TELEMETRY' : 'SYS_LOG TERMINAL' }} ({{ terminalLogs.length }})</span>
+    </button>
+  </div>
+
+  <!-- Expandable Cyber Telemetry Drawer -->
+  <div class="cyber-terminal-drawer" *ngIf="showTerminal">
+    <div class="terminal-header">
+      <div class="term-title">
+        <span class="term-dot"></span>
+        <span>REAL-TIME KERNEL TELEMETRY FEED // LOCALHOST:8000</span>
+      </div>
+      <div class="term-controls">
+        <button type="button" class="term-btn" (click)="clearTerminal()">CLEAR LOG</button>
+        <button type="button" class="term-btn" (click)="toggleTerminal()">✕</button>
+      </div>
+    </div>
+    <div class="terminal-body">
+      <div *ngFor="let log of terminalLogs" class="term-line">
+        <span class="term-prompt">›</span> {{ log }}
+      </div>
+    </div>
   </div>
 </div>

@@ -196,15 +196,44 @@ button, a {
    ========================================================= */
 
 .cyber-login-universe {
+  --cyber-primary: #10b981;
+  --cyber-secondary: #06b6d4;
+  --cyber-accent: #047857;
+  --cyber-glow: rgba(16, 185, 129, 0.35);
+  --cyber-card-border: rgba(16, 185, 129, 0.3);
+  --cyber-btn-grad: linear-gradient(135deg, #059669 0%, #0d9488 50%, #0284c7 100%);
+  --cyber-bg-radial: radial-gradient(circle at 50% 20%, #0f172a 0%, #090e1a 50%, #030712 100%);
+
   position: relative;
   min-height: 100vh;
   width: 100%;
-  background: radial-gradient(circle at 50% 20%, #0f172a 0%, #090e1a 50%, #030712 100%);
+  background: var(--cyber-bg-radial);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   color: #f1f5f9;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  transition: background 0.6s ease;
+}
+
+.cyber-login-universe[data-theme="cyberpunk"] {
+  --cyber-primary: #ec4899;
+  --cyber-secondary: #a855f7;
+  --cyber-accent: #38bdf8;
+  --cyber-glow: rgba(236, 72, 153, 0.4);
+  --cyber-card-border: rgba(236, 72, 153, 0.35);
+  --cyber-btn-grad: linear-gradient(135deg, #db2777 0%, #9333ea 50%, #2563eb 100%);
+  --cyber-bg-radial: radial-gradient(circle at 50% 20%, #1a0826 0%, #0d0417 50%, #05010a 100%);
+}
+
+.cyber-login-universe[data-theme="quantum"] {
+  --cyber-primary: #00f2fe;
+  --cyber-secondary: #4facfe;
+  --cyber-accent: #0284c7;
+  --cyber-glow: rgba(0, 242, 254, 0.4);
+  --cyber-card-border: rgba(0, 242, 254, 0.35);
+  --cyber-btn-grad: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #1e40af 100%);
+  --cyber-bg-radial: radial-gradient(circle at 50% 20%, #06182c 0%, #030d19 50%, #01040a 100%);
 }
 
 .cyber-canvas {
@@ -214,7 +243,6 @@ button, a {
   width: 100%;
   height: 100%;
   z-index: 1;
-  pointer-events: none;
 }
 
 .cyber-grid-overlay {
@@ -237,7 +265,7 @@ button, a {
   background-size: 100% 4px;
   pointer-events: none;
   z-index: 3;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .cyber-ambient-glow {
@@ -254,7 +282,7 @@ button, a {
   height: 450px;
   top: 15%;
   left: 20%;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--cyber-glow) 0%, transparent 70%);
 }
 
 .cyber-ambient-glow.glow-2 {
@@ -280,14 +308,14 @@ button, a {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 28px;
+  padding: 12px 24px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 11.5px;
+  font-size: 11px;
   letter-spacing: 0.8px;
   color: #64748b;
   border-bottom: 1px solid rgba(148, 163, 184, 0.08);
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(10px);
 }
 
 .cyber-hud-bottombar {
@@ -296,18 +324,24 @@ button, a {
   margin-top: auto;
 }
 
+.hud-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .hud-item {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
 }
 
 .hud-dot.live-pulse {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 10px #10b981;
+  background: var(--cyber-primary);
+  box-shadow: 0 0 10px var(--cyber-primary);
   animation: dotBlink 1.6s infinite ease-in-out;
 }
 
@@ -322,13 +356,84 @@ button, a {
 }
 
 .hud-value {
-  color: #10b981;
+  color: var(--cyber-primary);
   font-weight: 700;
 }
 
 .hud-clock {
-  color: #06b6d4;
+  color: var(--cyber-secondary);
   letter-spacing: 1px;
+}
+
+.hud-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 6px;
+  color: #94a3b8;
+  font-family: inherit;
+  font-size: 10px;
+  padding: 3px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+}
+
+.hud-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+  border-color: var(--cyber-primary);
+}
+
+.hud-pill-selector {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 20px;
+  padding: 2px 6px;
+  gap: 3px;
+}
+
+.hud-pill {
+  background: transparent;
+  border: none;
+  border-radius: 14px;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hud-pill.active {
+  background: var(--cyber-primary);
+  color: #030712;
+  box-shadow: 0 0 10px var(--cyber-glow);
+}
+
+.hud-terminal-trigger {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 6px;
+  color: var(--cyber-primary);
+  font-family: inherit;
+  font-size: 10px;
+  padding: 4px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.hud-terminal-trigger:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--cyber-primary);
+  box-shadow: 0 0 12px var(--cyber-glow);
 }
 
 /* Perspective Box & 3D Tilt Card */
@@ -345,29 +450,29 @@ button, a {
 
 .cyber-login-card {
   width: 100%;
-  max-width: 440px;
-  background: rgba(15, 23, 42, 0.72);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid rgba(16, 185, 129, 0.28);
+  max-width: 450px;
+  background: rgba(15, 23, 42, 0.74);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid var(--cyber-card-border);
   border-radius: 20px;
-  padding: 34px 30px;
+  padding: 30px 28px;
   position: relative;
   overflow: hidden;
   box-shadow: 
     0 25px 60px -15px rgba(0, 0, 0, 0.8),
-    0 0 40px rgba(16, 185, 129, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    0 0 40px var(--cyber-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
   transform-style: preserve-3d;
   transition: box-shadow 0.4s ease, border-color 0.4s ease;
 }
 
 .cyber-login-card:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: var(--cyber-primary);
   box-shadow: 
     0 30px 70px -15px rgba(0, 0, 0, 0.9),
-    0 0 50px rgba(16, 185, 129, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    0 0 50px var(--cyber-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .cyber-glare {
@@ -384,10 +489,10 @@ button, a {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, transparent, #10b981, #06b6d4, transparent);
-  box-shadow: 0 0 18px 4px rgba(16, 185, 129, 0.85);
+  background: linear-gradient(90deg, transparent, var(--cyber-primary), var(--cyber-secondary), transparent);
+  box-shadow: 0 0 18px 4px var(--cyber-primary);
   z-index: 15;
-  animation: laserScan 1.5s infinite ease-in-out alternate;
+  animation: laserScan 1.4s infinite ease-in-out alternate;
   pointer-events: none;
 }
 
@@ -409,29 +514,29 @@ button, a {
 .cyber-corner.tl {
   top: 8px;
   left: 8px;
-  border-top: 2px solid #10b981;
-  border-left: 2px solid #10b981;
+  border-top: 2px solid var(--cyber-primary);
+  border-left: 2px solid var(--cyber-primary);
 }
 
 .cyber-corner.tr {
   top: 8px;
   right: 8px;
-  border-top: 2px solid #06b6d4;
-  border-right: 2px solid #06b6d4;
+  border-top: 2px solid var(--cyber-secondary);
+  border-right: 2px solid var(--cyber-secondary);
 }
 
 .cyber-corner.bl {
   bottom: 8px;
   left: 8px;
-  border-bottom: 2px solid #06b6d4;
-  border-left: 2px solid #06b6d4;
+  border-bottom: 2px solid var(--cyber-secondary);
+  border-left: 2px solid var(--cyber-secondary);
 }
 
 .cyber-corner.br {
   bottom: 8px;
   right: 8px;
-  border-bottom: 2px solid #10b981;
-  border-right: 2px solid #10b981;
+  border-bottom: 2px solid var(--cyber-primary);
+  border-right: 2px solid var(--cyber-primary);
 }
 
 /* Brand Section & Orbital Rings */
@@ -440,19 +545,20 @@ button, a {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  margin-bottom: 26px;
+  margin-bottom: 20px;
   position: relative;
   z-index: 5;
 }
 
 .cyber-orbital-badge {
   position: relative;
-  width: 60px;
-  height: 60px;
-  margin-bottom: 14px;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
 .orbital-ring {
@@ -463,13 +569,13 @@ button, a {
 }
 
 .orbital-ring.ring-1 {
-  border: 1.5px dashed rgba(16, 185, 129, 0.6);
+  border: 1.5px dashed var(--cyber-primary);
   animation: orbitClockwise 9s linear infinite;
 }
 
 .orbital-ring.ring-2 {
   inset: -6px;
-  border: 1px dotted rgba(6, 182, 212, 0.45);
+  border: 1px dotted var(--cyber-secondary);
   animation: orbitCounter 14s linear infinite;
 }
 
@@ -484,47 +590,86 @@ button, a {
 }
 
 .orbital-core {
-  width: 44px;
-  height: 44px;
-  background: linear-gradient(135deg, #10b981 0%, #0d9488 50%, #0369a1 100%);
+  width: 42px;
+  height: 42px;
+  background: var(--cyber-btn-grad);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
-  font-size: 22px;
+  font-size: 20px;
   color: #ffffff;
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 25px var(--cyber-glow), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .cyber-pre-title {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 2px;
-  color: #06b6d4;
+  color: var(--cyber-secondary);
   margin-bottom: 4px;
-  text-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+  text-shadow: 0 0 8px var(--cyber-glow);
 }
 
 .cyber-brand-title {
-  font-size: 28px;
+  font-size: 27px;
   font-weight: 800;
   color: #f8fafc;
   letter-spacing: -0.5px;
   margin: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-.cyber-brand-title span {
-  color: #10b981;
-  text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+.cyber-brand-title:hover {
+  text-shadow: 0 0 20px var(--cyber-primary);
 }
 
 .cyber-subtitle {
-  font-size: 12.5px;
+  font-size: 12px;
   color: #94a3b8;
   margin: 4px 0 0 0;
   letter-spacing: 0.2px;
+}
+
+/* Auth Mode Tabs */
+.auth-mode-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 18px;
+  gap: 4px;
+}
+
+.auth-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.auth-tab.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cyber-primary);
+  box-shadow: 0 0 12px var(--cyber-glow);
+  border: 1px solid var(--cyber-card-border);
 }
 
 /* Alert Box */
@@ -533,7 +678,7 @@ button, a {
   border: 1px solid rgba(239, 68, 68, 0.35);
   border-radius: 10px;
   padding: 10px 14px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -588,7 +733,7 @@ button, a {
 .cyber-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   position: relative;
   z-index: 5;
 }
@@ -607,7 +752,7 @@ button, a {
 
 .cyber-label-row label {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.7px;
   color: #94a3b8;
@@ -615,7 +760,7 @@ button, a {
 
 .field-hud-tag {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 9.5px;
+  font-size: 9px;
   color: #475569;
   letter-spacing: 0.5px;
 }
@@ -624,8 +769,8 @@ button, a {
   background: transparent;
   border: none;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
-  color: #06b6d4;
+  font-size: 9.5px;
+  color: var(--cyber-secondary);
   cursor: pointer;
   padding: 0;
   letter-spacing: 0.5px;
@@ -633,7 +778,7 @@ button, a {
 }
 
 .cyber-toggle-pass:hover {
-  color: #38bdf8;
+  color: var(--cyber-primary);
   text-decoration: underline;
 }
 
@@ -647,19 +792,19 @@ button, a {
   position: absolute;
   left: 14px;
   font-size: 14px;
-  color: #06b6d4;
+  color: var(--cyber-secondary);
   pointer-events: none;
   z-index: 2;
 }
 
 .cyber-input-wrap input {
   width: 100%;
-  background: rgba(3, 7, 18, 0.65);
+  background: rgba(3, 7, 18, 0.68);
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 10px;
   padding: 12px 14px 12px 40px;
   color: #f8fafc;
-  font-size: 13.5px;
+  font-size: 13px;
   font-family: inherit;
   outline: none;
   transition: all 0.25s ease;
@@ -667,10 +812,10 @@ button, a {
 }
 
 .cyber-input-wrap input:focus {
-  border-color: #10b981;
-  background: rgba(3, 7, 18, 0.88);
+  border-color: var(--cyber-primary);
+  background: rgba(3, 7, 18, 0.9);
   box-shadow: 
-    0 0 18px rgba(16, 185, 129, 0.25),
+    0 0 18px var(--cyber-glow),
     inset 0 0 10px rgba(16, 185, 129, 0.08);
 }
 
@@ -703,12 +848,154 @@ button, a {
   box-shadow: 0 0 8px currentColor;
 }
 
-.entropy-status {
+.entropy-stats-row {
   display: flex;
   justify-content: space-between;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 9.5px;
+  font-size: 9px;
   letter-spacing: 0.5px;
+  color: #64748b;
+}
+
+.stat-cell b {
+  color: #e2e8f0;
+}
+
+/* Biometric Scanner Panel */
+.biometric-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 10px 0;
+  position: relative;
+  z-index: 5;
+}
+
+.biometric-pad-container {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.biometric-ring-outer {
+  position: absolute;
+  inset: -10px;
+  border: 1.5px dashed var(--cyber-secondary);
+  border-radius: 50%;
+  animation: orbitClockwise 12s linear infinite;
+  opacity: 0.6;
+}
+
+.biometric-ring-inner {
+  position: absolute;
+  inset: -4px;
+  border: 1px dotted var(--cyber-primary);
+  border-radius: 50%;
+  animation: orbitCounter 8s linear infinite;
+  opacity: 0.8;
+}
+
+.biometric-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.bio-bg-circle {
+  fill: none;
+  stroke: rgba(148, 163, 184, 0.15);
+  stroke-width: 5;
+}
+
+.bio-progress-circle {
+  fill: none;
+  stroke: var(--cyber-primary);
+  stroke-width: 6;
+  stroke-dasharray: 326.7;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.08s linear;
+  filter: drop-shadow(0 0 8px var(--cyber-primary));
+}
+
+.biometric-sensor-core {
+  position: relative;
+  width: 86px;
+  height: 86px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(3, 7, 18, 0.85) 80%);
+  border: 2px solid var(--cyber-card-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px var(--cyber-glow);
+}
+
+.bio-icon {
+  font-size: 36px;
+  filter: drop-shadow(0 0 10px var(--cyber-primary));
+  user-select: none;
+}
+
+.bio-scanline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #ffffff;
+  box-shadow: 0 0 14px 4px var(--cyber-primary);
+  animation: laserScan 0.8s infinite alternate ease-in-out;
+}
+
+.biometric-readout {
+  width: 100%;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  margin-bottom: 16px;
+}
+
+.readout-title {
+  font-size: 9.5px;
+  color: #64748b;
+  letter-spacing: 1px;
+}
+
+.readout-status {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--cyber-primary);
+  margin: 5px 0;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 8px var(--cyber-glow);
+}
+
+.readout-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(148, 163, 184, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.readout-fill {
+  height: 100%;
+  background: var(--cyber-primary);
+  box-shadow: 0 0 10px var(--cyber-primary);
+  transition: width 0.1s linear;
+}
+
+.biometric-actions {
+  width: 100%;
+}
+
+.bio-btn {
+  user-select: none;
 }
 
 /* Cyber Checkbox */
@@ -742,9 +1029,9 @@ button, a {
 }
 
 .cyber-checkbox-label input:checked ~ .custom-cyber-box {
-  background: #10b981;
-  border-color: #10b981;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  background: var(--cyber-primary);
+  border-color: var(--cyber-primary);
+  box-shadow: 0 0 10px var(--cyber-glow);
 }
 
 .cyber-checkbox-label input:checked ~ .custom-cyber-box::after {
@@ -771,26 +1058,26 @@ button, a {
   width: 100%;
   border: none;
   border-radius: 12px;
-  padding: 14px 20px;
-  background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #0284c7 100%);
+  padding: 13px 20px;
+  background: var(--cyber-btn-grad);
   color: #ffffff;
   font-family: inherit;
   font-weight: 700;
-  font-size: 13.5px;
+  font-size: 13px;
   letter-spacing: 0.8px;
   cursor: pointer;
   overflow: hidden;
   box-shadow: 
-    0 10px 25px -5px rgba(16, 185, 129, 0.4),
+    0 10px 25px -5px var(--cyber-glow),
     0 0 20px rgba(6, 182, 212, 0.25);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .cyber-submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 
-    0 15px 35px -5px rgba(16, 185, 129, 0.6),
+    0 15px 35px -5px var(--cyber-glow),
     0 0 30px rgba(6, 182, 212, 0.45);
 }
 
@@ -853,8 +1140,8 @@ button, a {
 
 /* Card Diagnostics Footer */
 .cyber-card-footer {
-  margin-top: 22px;
-  padding-top: 16px;
+  margin-top: 20px;
+  padding-top: 14px;
   border-top: 1px solid rgba(148, 163, 184, 0.1);
   display: flex;
   justify-content: space-between;
@@ -873,8 +1160,89 @@ button, a {
 }
 
 .badge-icon {
-  color: #10b981;
+  color: var(--cyber-primary);
   font-size: 11px;
+}
+
+/* Expandable Telemetry Console Drawer */
+.cyber-terminal-drawer {
+  position: fixed;
+  bottom: 42px;
+  left: 20px;
+  right: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+  max-height: 220px;
+  background: rgba(3, 7, 18, 0.94);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--cyber-card-border);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  z-index: 100;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.85), 0 0 30px var(--cyber-glow);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+}
+
+.term-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cyber-primary);
+  box-shadow: 0 0 8px var(--cyber-primary);
+  margin-right: 6px;
+}
+
+.term-body {
+  padding: 12px 16px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.term-prompt {
+  color: var(--cyber-primary);
+  font-weight: 700;
+}
+
+.term-btn {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 4px;
+  color: #94a3b8;
+  font-family: inherit;
+  font-size: 9.5px;
+  padding: 2px 7px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.term-btn:hover {
+  border-color: var(--cyber-primary);
+  color: #f8fafc;
 }
 
 /* Responsive Rules */
@@ -885,10 +1253,10 @@ button, a {
   .cyber-hud-topbar,
   .cyber-hud-bottombar {
     padding: 10px 16px;
-    font-size: 10.5px;
+    font-size: 10px;
   }
   .cyber-login-card {
-    padding: 26px 20px;
+    padding: 24px 18px;
   }
   .cyber-brand-title {
     font-size: 24px;
