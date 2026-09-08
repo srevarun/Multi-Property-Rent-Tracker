@@ -527,31 +527,20 @@ export class AppComponent implements OnInit {
       this.api.addProperty(payload).subscribe({
         next: (newProp: Property) => {
           if (tenantId) {
+            const effectiveStay = this.dashboardStayMonth || new Date().toISOString().slice(0, 7);
             const tenancyPayload = {
               property_id: newProp.id,
               tenant_id: tenantId,
               business_name: this.propertyForm.property_type === 'Shop' ? this.propertyForm.business_name : '',
-              start_date: this.propertyForm.start_date || null,
+              start_date: this.propertyForm.start_date || (effectiveStay + '-01'),
               end_date: null,
               deposit: this.propertyForm.deposit || 0,
-              initial_rent: this.propertyForm.start_date ? (this.propertyForm.monthly_rent || 0) : null,
+              initial_rent: this.propertyForm.monthly_rent || 0,
               notes: ''
             };
             this.api.saveTenancyRecord('tenancies', 0, tenancyPayload).subscribe({
               next: (createdTenancy: any) => {
-                if (!this.propertyForm.start_date && this.propertyForm.monthly_rent) {
-                  const curMonth = new Date().toISOString().slice(0, 7);
-                  this.api.saveTenancyRecord('rent-rates', 0, {
-                    tenancy_id: createdTenancy.id,
-                    effective_month: curMonth,
-                    amount: this.propertyForm.monthly_rent
-                  }).subscribe({
-                    next: () => this.done('Property and tenancy created'),
-                    error: () => this.done('Property and tenancy created')
-                  });
-                } else {
-                  this.done('Property and tenancy created');
-                }
+                this.done('Property and tenancy created');
               },
               error: err => this.done('Property created, but could not link tenancy: ' + (err.error?.detail || ''))
             });
