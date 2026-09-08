@@ -28,7 +28,7 @@ class PaymentCreate(BaseModel):
     rental_month: str
     amount: float = Field(gt=0)
     paid_on: Optional[date] = None
-    payment_method: str = Field(default="Bank transfer", max_length=50)
+    payment_method: str = Field(default="Cash", max_length=50)
     reference: str = Field(default="", max_length=100)
     notes: str = Field(default="", max_length=500)
 

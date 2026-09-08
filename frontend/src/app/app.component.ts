@@ -17,6 +17,7 @@ export class AppComponent implements OnInit {
   modal: 'property' | 'payment' | 'group' | 'tax' | 'electricity' | 'collection' | 'expense' | 'tenant' | 'tenancy' | 'rate' | 'refund' | 'transfer' | null = null;
   selectedMonth = new Date().toISOString().slice(0, 7);
   propertyViewMode: 'grid' | 'table' = 'grid';
+  propertyTenantSearch: string = '';
   dashboardGroupFilter: string = '';
   dashboardSearch: string = '';
   dashboardStatusFilter: 'all' | 'pending' | 'paid' = 'all';
@@ -35,6 +36,7 @@ export class AppComponent implements OnInit {
   paymentToMonth = '';
   tenancyGroupFilter = '';
   tenancySearch = '';
+  tenantSearch = '';
   expensePropertyFilter = '';
   expenseGroupFilter = '';
   expenseCategoryFilter = '';
@@ -425,16 +427,39 @@ export class AppComponent implements OnInit {
       deposit: 0
     };
   }
-  emptyPayment() { return { tenancy_id: null as number | null, property_id: 0, rental_month: this.selectedMonth, amount: 0, paid_on: new Date().toISOString().slice(0, 10), payment_method: 'Bank transfer', reference: '', notes: '' }; }
+  emptyPayment() {
+    const today = new Date().toISOString().slice(0, 10);
+    return {
+      tenancy_id: null as number | null,
+      property_id: 0,
+      rental_month: this.getPreviousMonth(today),
+      amount: 0,
+      paid_on: today,
+      payment_method: 'Cash',
+      reference: '',
+      notes: ''
+    };
+  }
+
+  onPaymentPaidOnChange() {
+    if (!this.editingPayment && this.paymentForm.paid_on) {
+      this.paymentForm.rental_month = this.getPreviousMonth(this.paymentForm.paid_on);
+      this.selectPaymentTenancy();
+    }
+  }
+
+  get dashboardStayMonth(): string {
+    return this.getPreviousMonth(this.selectedMonth);
+  }
 
   loadAll() {
     this.loading = true; this.error = '';
-    forkJoin({ dashboard: this.api.dashboard(this.selectedMonth), properties: this.api.properties(), payments: this.api.payments(), groups: this.api.groups(), taxes: this.api.taxes(), electricity: this.api.electricity(), expenses: this.api.expenses(), history: this.api.editHistory(), tenants: this.api.tenants(), tenancies: this.api.tenancies(), rates: this.api.rates() }).subscribe({
+    forkJoin({ dashboard: this.api.dashboard(this.dashboardStayMonth), properties: this.api.properties(), payments: this.api.payments(), groups: this.api.groups(), taxes: this.api.taxes(), electricity: this.api.electricity(), expenses: this.api.expenses(), history: this.api.editHistory(), tenants: this.api.tenants(), tenancies: this.api.tenancies(), rates: this.api.rates() }).subscribe({
       next: data => { Object.assign(this, data); this.loading = false; },
       error: () => { this.error = 'Could not connect to the server. Make sure the Python API is running.'; this.loading = false; }
     });
   }
-  changeMonth() { this.api.dashboard(this.selectedMonth).subscribe(data => this.dashboard = data); }
+  changeMonth() { this.api.dashboard(this.dashboardStayMonth).subscribe(data => this.dashboard = data); }
   setView(view: View) { this.view = view; }
   openProperty(property?: Property) {
     if (property) {
@@ -461,11 +486,13 @@ export class AppComponent implements OnInit {
     } else {
       this.propertyForm = this.emptyProperty();
     }
+    this.propertyTenantSearch = '';
     this.modal = 'property';
   }
   openPayment(property?: Property) {
     this.editingPayment = 0;
     this.paymentForm = this.emptyPayment();
+    this.paymentForm.rental_month = this.dashboardStayMonth;
     if (property) { this.paymentForm.property_id = property.id; this.paymentForm.amount = property.monthly_rent ?? 0; }
     this.selectPaymentTenancy();
     this.modal = 'payment';
@@ -649,6 +676,29 @@ export class AppComponent implements OnInit {
 
   setDashboardGroup(groupId: string) {
     this.dashboardGroupFilter = this.dashboardGroupFilter === groupId ? '' : groupId;
+  }
+
+  get filteredPropertyTenants(): Tenant[] {
+    if (!this.propertyTenantSearch) return this.tenants;
+    const q = this.propertyTenantSearch.toLowerCase().trim();
+    return this.tenants.filter(t => [t.name, t.phone, t.notes].some(v => v?.toLowerCase().includes(q)));
+  }
+
+  get selectedTenantName(): string {
+    if (this.propertyForm.tenant_selection === 0) return 'Vacant / No tenant';
+    if (this.propertyForm.tenant_selection === -1) return '＋ Quick add new tenant...';
+    const t = this.tenants.find(item => item.id === this.propertyForm.tenant_selection);
+    return t ? t.name + (t.phone ? ' · ' + t.phone : '') : 'Selected tenant #' + this.propertyForm.tenant_selection;
+  }
+
+  selectPropertyTenant(tenantId: number) {
+    this.propertyForm.tenant_selection = tenantId;
+  }
+
+  get filteredTenants(): Tenant[] {
+    const q = this.tenantSearch.toLowerCase().trim();
+    if (!q) return this.tenants;
+    return this.tenants.filter(t => [t.name, t.phone, t.notes].some(v => v?.toLowerCase().includes(q)));
   }
 }
 

@@ -4,4 +4,7 @@ backend/app/__pycache__/
 backend/rent_tracker.db
 frontend/node_modules/
 frontend/dist/
+frontend/.angular/
+.angular/
+*.db-lock
 .DS_Store

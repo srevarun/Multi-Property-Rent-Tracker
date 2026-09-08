@@ -44,13 +44,13 @@
       <div class="toolbar">
         <div>
           <h2>Portfolio snapshot</h2>
-          <p>Track rent collection for the selected stay month (in postpaid billing, August stay is collected in September).</p>
+          <p>Tracking rent collection for <b>{{ dashboardStayMonth | date:'MMMM yyyy' }} stay</b> (collected during {{ selectedMonth | date:'MMMM yyyy' }}).</p>
         </div>
         <label class="month">
-          Stay / Rental month
+          Collection month
           <input type="month" [(ngModel)]="selectedMonth" (change)="changeMonth()">
           <small style="display: block; font-size: 0.72rem; color: #64748b; margin-top: 2px;">
-            e.g. {{ selectedMonth | date:'MMM yyyy' }} stay (due in {{ getNextMonth(selectedMonth) | date:'MMM yyyy' }})
+            ⚡ Collecting for {{ dashboardStayMonth | date:'MMM yyyy' }} stay (Postpaid)
           </small>
         </label>
       </div>
@@ -59,9 +59,9 @@
       <article class="notice" *ngIf="dashboard.unknown_properties.length"><b>Historical totals are incomplete</b><p *ngFor="let p of dashboard.unknown_properties">{{ p.name }}: {{ p.reason }}.</p><p>These properties are excluded from expected rent and balances until the missing details are entered.</p></article>
       
       <div class="stats">
-        <article><div class="stat-icon green">₹</div><p>Collected for {{ selectedMonth | date:'MMM yyyy' }} stay</p><h3>{{ currency(dashboard.collected_rent) }}</h3><small><b>{{ dashboard.collection_rate }}%</b> of expected rent</small></article>
+        <article><div class="stat-icon green">₹</div><p>Collected for {{ dashboardStayMonth | date:'MMM yyyy' }} stay</p><h3>{{ currency(dashboard.collected_rent) }}</h3><small><b>{{ dashboard.collection_rate }}%</b> of expected rent</small></article>
         <article><div class="stat-icon amber">◷</div><p>Pending rent</p><h3>{{ currency(dashboard.pending_rent) }}</h3><small>{{ dashboard.pending_properties.length }} properties pending</small></article>
-        <article><div class="stat-icon blue">⌂</div><p>Properties charged</p><h3>{{ dashboard.total_properties }}</h3><small>{{ currency(dashboard.expected_rent) }} monthly value</small></article>
+        <article><div class="stat-icon blue">⌂</div><p>Properties charged</p><h3>{{ dashboard.total_properties }}</h3><small>{{ currency(dashboard.expected_rent) }} expected for {{ dashboardStayMonth | date:'MMM' }}</small></article>
         <article><div class="stat-icon purple">◇</div><p>Advances held</p><h3>{{ currency(dashboard.total_advances) }}</h3><small>Total tenant deposits</small></article>
       </div>
 
@@ -70,7 +70,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div>
             <h3 style="font-size: 15px; font-weight: 700; color: var(--ink-900); margin: 0;">Group performance breakdown</h3>
-            <p style="font-size: 12px; color: var(--ink-500); margin: 2px 0 0 0;">Rent collection status across your apartments and complexes for {{ selectedMonth | date:'MMM yyyy' }} stay</p>
+            <p style="font-size: 12px; color: var(--ink-500); margin: 2px 0 0 0;">Rent collection status across your apartments and complexes for {{ dashboardStayMonth | date:'MMM yyyy' }} stay ({{ selectedMonth | date:'MMM yyyy' }} collections)</p>
           </div>
           <button *ngIf="dashboardGroupFilter" class="btn secondary" style="font-size: 11.5px; padding: 4px 10px;" (click)="dashboardGroupFilter = ''">
             ✕ Clear group filter
@@ -122,7 +122,7 @@
 
       <div class="grid">
         <article class="card collection">
-          <div class="card-head"><div><h2>Collection progress</h2><p>{{ selectedMonth | date:'MMMM yyyy' }} stay (Collected in {{ getNextMonth(selectedMonth) | date:'MMMM yyyy' }})</p></div><span class="rate">{{ dashboard.collection_rate }}%</span></div>
+          <div class="card-head"><div><h2>Collection progress</h2><p>{{ dashboardStayMonth | date:'MMMM yyyy' }} stay (Collected in {{ selectedMonth | date:'MMMM yyyy' }})</p></div><span class="rate">{{ dashboard.collection_rate }}%</span></div>
           <div class="progress"><span [style.width.%]="dashboard.collection_rate"></span></div>
           <div class="progress-labels"><span><i class="dot paid"></i>Collected <b>{{ currency(dashboard.collected_rent) }}</b></span><span><i class="dot pending"></i>Pending <b>{{ currency(dashboard.pending_rent) }}</b></span></div>
         </article>
@@ -132,8 +132,8 @@
       <article class="card table-card">
         <div class="card-head">
           <div>
-            <h2>Rent due for {{ selectedMonth | date:'MMMM yyyy' }} stay</h2>
-            <p>Properties with a balance for {{ selectedMonth | date:'MMMM yyyy' }} stay (typically collected by {{ getNextMonth(selectedMonth) | date:'MMMM yyyy' }})</p>
+            <h2>Rent due for {{ dashboardStayMonth | date:'MMMM yyyy' }} stay</h2>
+            <p>Properties with a balance for {{ dashboardStayMonth | date:'MMMM yyyy' }} stay (collected in {{ selectedMonth | date:'MMMM yyyy' }})</p>
           </div>
           <span class="pill">{{ filteredDashboardPending.length }} pending</span>
         </div>
@@ -155,7 +155,7 @@
         <div class="empty" *ngIf="!filteredDashboardPending.length && !dashboard.unknown_properties.length">
           <div>✓</div>
           <h3>All caught up!</h3>
-          <p *ngIf="!dashboard.pending_properties.length">Every property with known rent for {{ selectedMonth | date:'MMMM yyyy' }} stay is fully paid.</p>
+          <p *ngIf="!dashboard.pending_properties.length">Every property with known rent for {{ dashboardStayMonth | date:'MMMM yyyy' }} stay is fully paid.</p>
           <p *ngIf="dashboard.pending_properties.length">No pending properties match the current group or search filter.</p>
         </div>
 
@@ -176,8 +176,8 @@
                 <td><b>{{ p.name }}</b><small>{{ p.group_name || 'Ungrouped' }} · {{ p.property_type || 'House' }}</small></td>
                 <td><span *ngIf="p.business_name && p.property_type === 'Shop'"><b>{{ p.business_name }}</b> <small>({{ p.tenant_name || 'Vacant' }})</small></span><span *ngIf="!p.business_name || p.property_type !== 'Shop'">{{ p.tenant_name || 'Vacant' }}</span></td>
                 <td>
-                  <b>{{ selectedMonth | date:'MMM yyyy' }} stay</b>
-                  <br><small style="color: #64748b;">Due by {{ p.due_day }}th {{ getNextMonth(selectedMonth) | date:'MMM' }}</small>
+                  <b>{{ dashboardStayMonth | date:'MMM yyyy' }} stay</b>
+                  <br><small style="color: #64748b;">Due by {{ p.due_day }}th {{ selectedMonth | date:'MMM' }}</small>
                 </td>
                 <td>{{ currency(p.monthly_rent) }}</td>
                 <td class="balance">{{ currency(p.monthly_rent - p.amount_paid) }}</td>
@@ -522,7 +522,12 @@
     </section>
     <section *ngIf="!loading && view === 'tenants'" class="page">
       <div class="toolbar"><div><h2>Tenant registry</h2><p>Keep each person's details once, then link their stays to properties.</p></div><button class="btn primary" (click)="openTenant()">＋ Add tenant</button></div>
-      <div class="property-grid"><article class="property-card" *ngFor="let t of tenants"><h3>{{ t.name }}</h3><p class="location">{{ t.phone || 'No phone number' }}</p><p class="location">{{ t.notes }}</p><div class="tenant" style="margin-top: 8px;"><small>LIFETIME RENT RECEIVED</small><b style="color: #15803d;">{{ currency(tenantTotalPaid(t.name)) }}</b></div><footer><button (click)="openTenant(t)">Edit tenant</button></footer></article></div>
+      <div class="filters" style="margin-bottom: 16px;">
+        <label class="search" style="flex: 1; max-width: 400px;">⌕<input [(ngModel)]="tenantSearch" placeholder="Search tenant by name, phone, or notes..."></label>
+        <button *ngIf="tenantSearch" class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" (click)="tenantSearch = ''">Reset</button>
+      </div>
+      <div class="property-grid"><article class="property-card" *ngFor="let t of filteredTenants"><h3>{{ t.name }}</h3><p class="location">{{ t.phone || 'No phone number' }}</p><p class="location">{{ t.notes }}</p><div class="tenant" style="margin-top: 8px;"><small>LIFETIME RENT RECEIVED</small><b style="color: #15803d;">{{ currency(tenantTotalPaid(t.name)) }}</b></div><footer><button (click)="openTenant(t)">Edit tenant</button></footer></article></div>
+      <p *ngIf="!filteredTenants.length && tenants.length" class="empty card">No tenants found matching "{{ tenantSearch }}".</p>
       <p *ngIf="!tenants.length" class="empty card">Add your current or former tenants to get started.</p>
       <div class="toolbar section-gap"><div><h2>Tenancy & rent history</h2><p>Add previous stays and rent changes for accurate historical balances.</p></div><button class="btn primary" [disabled]="!tenants.length || !properties.length" (click)="openTenancy()">＋ Add tenancy</button></div>
       <div class="filters" style="margin-bottom: 12px;">
@@ -622,7 +627,80 @@
 
 <div class="modal-backdrop" *ngIf="modal" (mousedown)="modal = null"><div class="modal" (mousedown)="$event.stopPropagation()">
   <button class="modal-close" (click)="modal = null">×</button>
-  <ng-container *ngIf="modal === 'property'"><p class="eyebrow">PROPERTY</p><h2>{{ propertyForm.id ? 'Edit property' : 'Add a new property' }}</h2><p class="modal-sub" *ngIf="!propertyForm.id">Enter property details and optionally assign its current tenant from the registry.</p><p class="modal-sub" *ngIf="propertyForm.id && propertyHasTenancyHistory">Tenant, rent and deposit are managed under Tenants & tenancies.</p><p class="modal-sub" *ngIf="propertyForm.id && !propertyHasTenancyHistory">This property uses legacy rent details. You can update its defaults or assign a tenancy under Tenants & tenancies.</p><form (ngSubmit)="saveProperty()"><div class="form-grid"><div class="notice" *ngIf="!groups.length" style="grid-column: 1 / -1; background: #fef2f2; border: 1px solid #f87171; color: #991b1b; padding: 10px; border-radius: 6px;"><b>Group required:</b> You need to create at least one property group before adding properties. <button type="button" class="btn secondary" style="margin-left: 8px;" (click)="openGroup()">＋ Add group now</button></div><label class="full">Property name<input required [(ngModel)]="propertyForm.name" name="name" placeholder="e.g. Lakeview Apartment 3B"></label><label>Property type<select [(ngModel)]="propertyForm.property_type" name="property_type"><option value="House">🏠 House</option><option value="Shop">🏪 Shop</option><option value="Storage unit">📦 Storage unit</option><option value="Office">🏢 Office</option><option value="Other">⌂ Other</option></select></label><label>Property group <span style="color: #ef4444;">*</span><select required [(ngModel)]="propertyForm.group_id" name="group_id"><option [ngValue]="null" disabled>Select property group (required)</option><option *ngFor="let g of groups" [ngValue]="g.id">{{ g.name }}</option></select></label><label>Electricity bill paid by<select [(ngModel)]="propertyForm.electricity_payer" name="electricity_payer"><option value="Tenant">Tenant pays directly</option><option value="Owner">Owner pays and collects</option></select></label><label>Rent due day<input type="number" min="1" max="31" [(ngModel)]="propertyForm.due_day" name="due_day"></label><label class="full">Address<input [(ngModel)]="propertyForm.address" name="address" placeholder="Full street address"></label><ng-container *ngIf="!propertyForm.id"><label class="full">Current tenant<select [(ngModel)]="propertyForm.tenant_selection" name="tenant_selection"><option [ngValue]="0">Vacant / No tenant</option><option [ngValue]="-1">＋ Quick add new tenant...</option><option *ngFor="let t of tenants" [ngValue]="t.id">{{ t.name }} · {{ t.phone || '#' + t.id }}</option></select></label><ng-container *ngIf="propertyForm.tenant_selection === -1"><label>New tenant name<input required [(ngModel)]="propertyForm.new_tenant_name" name="new_tenant_name" placeholder="e.g. John Doe"></label><label>New tenant phone<input [(ngModel)]="propertyForm.new_tenant_phone" name="new_tenant_phone" placeholder="Phone number"></label></ng-container><ng-container *ngIf="propertyForm.tenant_selection !== 0"><label class="full" *ngIf="propertyForm.property_type === 'Shop'">Shop / Business trade name (optional)<input [(ngModel)]="propertyForm.business_name" name="business_name" placeholder="e.g. Kathir Steels, Sri Krishna Sweets"></label><label>Move-in date (optional)<input type="date" [(ngModel)]="propertyForm.start_date" name="start_date"></label><label>Monthly rent (₹)<input type="number" min="0" step="0.01" [(ngModel)]="propertyForm.monthly_rent" name="rent" placeholder="Agreed rent"></label><label>Deposit (₹)<input type="number" min="0" step="0.01" [(ngModel)]="propertyForm.deposit" name="deposit" placeholder="0"></label></ng-container></ng-container><ng-container *ngIf="propertyForm.id && !propertyHasTenancyHistory"><label>Tenant name<input [(ngModel)]="propertyForm.tenant_name" name="tenant" placeholder="Current tenant"></label><label>Tenant phone<input [(ngModel)]="propertyForm.tenant_phone" name="phone" placeholder="Phone number"></label><label>Monthly rent (₹)<input required type="number" min="0" [(ngModel)]="propertyForm.monthly_rent" name="rent"></label><label>Advance paid (₹)<input type="number" min="0" [(ngModel)]="propertyForm.advance_paid" name="advance"></label></ng-container><label class="check full"><input type="checkbox" [(ngModel)]="propertyForm.active" name="active"> Property is active</label></div><div class="modal-actions"><button type="button" class="btn secondary" (click)="modal = null">Cancel</button><button class="btn primary" [disabled]="!propertyForm.name || !propertyForm.group_id">Save property</button></div></form></ng-container>
+  <ng-container *ngIf="modal === 'property'"><p class="eyebrow">PROPERTY</p><h2>{{ propertyForm.id ? 'Edit property' : 'Add a new property' }}</h2><p class="modal-sub" *ngIf="!propertyForm.id">Enter property details and optionally assign its current tenant from the registry.</p><p class="modal-sub" *ngIf="propertyForm.id && propertyHasTenancyHistory">Tenant, rent and deposit are managed under Tenants & tenancies.</p><p class="modal-sub" *ngIf="propertyForm.id && !propertyHasTenancyHistory">This property uses legacy rent details. You can update its defaults or assign a tenancy under Tenants & tenancies.</p><form (ngSubmit)="saveProperty()"><div class="form-grid"><div class="notice" *ngIf="!groups.length" style="grid-column: 1 / -1; background: #fef2f2; border: 1px solid #f87171; color: #991b1b; padding: 10px; border-radius: 6px;"><b>Group required:</b> You need to create at least one property group before adding properties. <button type="button" class="btn secondary" style="margin-left: 8px;" (click)="openGroup()">＋ Add group now</button></div><label class="full">Property name<input required [(ngModel)]="propertyForm.name" name="name" placeholder="e.g. Lakeview Apartment 3B"></label><label>Property type<select [(ngModel)]="propertyForm.property_type" name="property_type"><option value="House">🏠 House</option><option value="Shop">🏪 Shop</option><option value="Storage unit">📦 Storage unit</option><option value="Office">🏢 Office</option><option value="Other">⌂ Other</option></select></label><label>Property group <span style="color: #ef4444;">*</span><select required [(ngModel)]="propertyForm.group_id" name="group_id"><option [ngValue]="null" disabled>Select property group (required)</option><option *ngFor="let g of groups" [ngValue]="g.id">{{ g.name }}</option></select></label><label>Electricity bill paid by<select [(ngModel)]="propertyForm.electricity_payer" name="electricity_payer"><option value="Tenant">Tenant pays directly</option><option value="Owner">Owner pays and collects</option></select></label><label>Rent due day<input type="number" min="1" max="31" [(ngModel)]="propertyForm.due_day" name="due_day"></label><label class="full">Address<input [(ngModel)]="propertyForm.address" name="address" placeholder="Full street address"></label>    <ng-container *ngIf="!propertyForm.id">
+      <div class="full" style="background: var(--ink-50); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-top: 2px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <label style="font-weight: 700; color: var(--ink-800); margin: 0; font-size: 11px;">
+            CURRENT TENANT OCCUPANCY
+          </label>
+          <span style="font-size: 11px; font-weight: 600; color: var(--primary);">
+            {{ filteredPropertyTenants.length }} of {{ tenants.length }} tenants
+          </span>
+        </div>
+
+        <!-- Tenant Search Bar -->
+        <div class="search" style="min-width: 100%; width: 100%; margin-bottom: 10px; background: #ffffff;">
+          ⌕ <input [(ngModel)]="propertyTenantSearch" name="prop_tenant_search" placeholder="Type to search tenant by name or phone..." style="font-size: 13px;">
+          <button *ngIf="propertyTenantSearch" type="button" class="icon-btn" style="padding: 0 4px; font-size: 14px; color: var(--ink-500);" (click)="propertyTenantSearch = ''" title="Clear search">×</button>
+        </div>
+
+        <!-- Quick Pick Option Buttons -->
+        <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;">
+          <button type="button" class="filter-chip" [class.active]="propertyForm.tenant_selection === 0" (click)="selectPropertyTenant(0)">
+            🏠 Vacant / No tenant
+          </button>
+          <button type="button" class="filter-chip" [class.active]="propertyForm.tenant_selection === -1" (click)="selectPropertyTenant(-1)">
+            ＋ Quick add new tenant...
+          </button>
+        </div>
+
+        <!-- Dropdown select -->
+        <label style="font-size: 10.5px; color: var(--ink-500); margin-bottom: 4px; font-weight: 600;">SELECT FROM MATCHING TENANTS:</label>
+        <select [(ngModel)]="propertyForm.tenant_selection" name="tenant_selection" style="width: 100%; font-size: 13px; font-weight: 500;">
+          <option [ngValue]="0">🏠 Vacant / No tenant</option>
+          <option [ngValue]="-1">＋ Quick add new tenant...</option>
+          <option *ngFor="let t of filteredPropertyTenants" [ngValue]="t.id">
+            👤 {{ t.name }} {{ t.phone ? '· ' + t.phone : '' }}
+          </option>
+        </select>
+
+        <!-- Selected Tenant Indicator Badge -->
+        <div *ngIf="propertyForm.tenant_selection > 0" style="margin-top: 10px; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #065f46; display: flex; justify-content: space-between; align-items: center;">
+          <span>✓ Selected: <b>{{ selectedTenantName }}</b></span>
+          <button type="button" class="text-btn" style="padding: 2px 8px; font-size: 11px;" (click)="selectPropertyTenant(0)">Change to Vacant</button>
+        </div>
+
+        <!-- No match helper -->
+        <div *ngIf="propertyTenantSearch && !filteredPropertyTenants.length" style="font-size: 12px; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; padding: 8px 10px; border-radius: 6px; margin-top: 8px; display: flex; align-items: center; justify-content: space-between;">
+          <span>No registered tenant matches "<b>{{ propertyTenantSearch }}</b>"</span>
+          <button type="button" class="text-btn" (click)="selectPropertyTenant(-1); propertyForm.new_tenant_name = propertyTenantSearch">＋ Add "{{ propertyTenantSearch }}" as new tenant</button>
+        </div>
+      </div>
+
+      <ng-container *ngIf="propertyForm.tenant_selection === -1">
+        <label>New tenant name <span style="color: #ef4444;">*</span>
+          <input required [(ngModel)]="propertyForm.new_tenant_name" name="new_tenant_name" placeholder="e.g. John Doe">
+        </label>
+        <label>New tenant phone
+          <input [(ngModel)]="propertyForm.new_tenant_phone" name="new_tenant_phone" placeholder="Phone number">
+        </label>
+      </ng-container>
+
+      <ng-container *ngIf="propertyForm.tenant_selection !== 0">
+        <label class="full" *ngIf="propertyForm.property_type === 'Shop'">Shop / Business trade name (optional)
+          <input [(ngModel)]="propertyForm.business_name" name="business_name" placeholder="e.g. Kathir Steels, Sri Krishna Sweets">
+        </label>
+        <label>Move-in date (optional)
+          <input type="date" [(ngModel)]="propertyForm.start_date" name="start_date">
+        </label>
+        <label>Monthly rent (₹)
+          <input type="number" min="0" step="0.01" [(ngModel)]="propertyForm.monthly_rent" name="rent" placeholder="Agreed rent">
+        </label>
+        <label>Deposit (₹)
+          <input type="number" min="0" step="0.01" [(ngModel)]="propertyForm.deposit" name="deposit" placeholder="0">
+        </label>
+      </ng-container>
+    </ng-container><ng-container *ngIf="propertyForm.id && !propertyHasTenancyHistory"><label>Tenant name<input [(ngModel)]="propertyForm.tenant_name" name="tenant" placeholder="Current tenant"></label><label>Tenant phone<input [(ngModel)]="propertyForm.tenant_phone" name="phone" placeholder="Phone number"></label><label>Monthly rent (₹)<input required type="number" min="0" [(ngModel)]="propertyForm.monthly_rent" name="rent"></label><label>Advance paid (₹)<input type="number" min="0" [(ngModel)]="propertyForm.advance_paid" name="advance"></label></ng-container><label class="check full"><input type="checkbox" [(ngModel)]="propertyForm.active" name="active"> Property is active</label></div><div class="modal-actions"><button type="button" class="btn secondary" (click)="modal = null">Cancel</button><button class="btn primary" [disabled]="!propertyForm.name || !propertyForm.group_id">Save property</button></div></form></ng-container>
   <ng-container *ngIf="modal === 'payment'">
     <p class="eyebrow">RENT COLLECTION</p>
     <h2>{{ editingPayment ? 'Edit rent payment' : 'Record rent payment' }}</h2>
@@ -649,7 +727,7 @@
                 [style.borderColor]="paymentForm.rental_month === getPreviousMonth(paymentForm.paid_on) ? '#2563eb' : ''"
                 [style.color]="paymentForm.rental_month === getPreviousMonth(paymentForm.paid_on) ? '#1e40af' : ''"
                 (click)="setPaymentRentalMonth(getPreviousMonth(paymentForm.paid_on))">
-                ⚡ Previous Month: {{ getPreviousMonth(paymentForm.paid_on) | date:'MMM yyyy' }} (Postpaid stay)
+                ⚡ Postpaid: {{ getPreviousMonth(paymentForm.paid_on) | date:'MMM yyyy' }} (Default)
               </button>
               <button type="button" class="btn secondary" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;"
                 [style.background]="paymentForm.rental_month === (paymentForm.paid_on ? paymentForm.paid_on.slice(0, 7) : getCurrentMonth()) ? '#dbeafe' : ''"
@@ -678,13 +756,13 @@
           <input required type="number" min="1" [(ngModel)]="paymentForm.amount" name="amount">
         </label>
         <label>Payment receipt date <span style="color: #ef4444;">*</span>
-          <input required type="date" [(ngModel)]="paymentForm.paid_on" name="paid_on">
+          <input required type="date" [(ngModel)]="paymentForm.paid_on" (ngModelChange)="onPaymentPaidOnChange()" name="paid_on">
         </label>
         <label>Payment method
           <select [(ngModel)]="paymentForm.payment_method" name="method">
+            <option>Cash</option>
             <option>Bank transfer</option>
             <option>UPI</option>
-            <option>Cash</option>
             <option>Cheque</option>
             <option>Other</option>
           </select>
