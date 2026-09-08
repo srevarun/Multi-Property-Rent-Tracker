@@ -1,78 +1,195 @@
-<div class="login-wrapper">
-  <div class="login-card">
-    <!-- Brand Header -->
-    <div class="login-header">
-      <div class="brand-mark login-brand-mark">R</div>
-      <h2>Rent<span>Ledger</span></h2>
-      <p>Property Management & Rent Collection</p>
-    </div>
+<div class="cyber-login-universe">
+  <!-- Interactive Neural Particle Vector Canvas -->
+  <canvas #cyberCanvas class="cyber-canvas"></canvas>
 
-    <!-- Error Alert -->
-    <div *ngIf="error" class="login-error-alert">
-      <span>⚠ {{ error }}</span>
-      <button type="button" (click)="error = ''">×</button>
-    </div>
+  <!-- Ambient Holographic Grid & Radial Lighting -->
+  <div class="cyber-grid-overlay"></div>
+  <div class="cyber-scanlines"></div>
+  <div class="cyber-ambient-glow glow-1"></div>
+  <div class="cyber-ambient-glow glow-2"></div>
 
-    <!-- Login Form -->
-    <form (ngSubmit)="onSubmit()" class="login-form">
-      <div class="login-field">
-        <label for="login-username">Username or Email</label>
-        <div class="input-with-icon">
-          <span class="field-icon">👤</span>
-          <input
-            id="login-username"
-            type="text"
-            required
-            autocomplete="username"
-            placeholder="Enter username"
-            [(ngModel)]="username"
-            name="username"
-            [disabled]="loading" />
+  <!-- Top Cyber HUD Telemetry Bar -->
+  <div class="cyber-hud-topbar">
+    <div class="hud-item">
+      <span class="hud-dot live-pulse"></span>
+      <span class="hud-label">CORE:</span>
+      <span class="hud-value">ONLINE // NODE_01</span>
+    </div>
+    <div class="hud-item hide-mobile">
+      <span class="hud-label">PROTOCOL:</span>
+      <span class="hud-value">TLS-v1.3 // PBKDF2-256</span>
+    </div>
+    <div class="hud-item hide-mobile">
+      <span class="hud-label">LATENCY:</span>
+      <span class="hud-value">{{ networkLatency }}</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">UTC_CLOCK:</span>
+      <span class="hud-value hud-clock">{{ liveTime }}</span>
+    </div>
+  </div>
+
+  <!-- Central Holographic Portal Card Container -->
+  <div class="cyber-card-perspective-box">
+    <div
+      #loginCardRef
+      class="cyber-login-card"
+      [class.card-loading]="loading"
+      [class.card-success]="success"
+      [class.card-error]="error"
+      [style.transform]="cardTransform"
+      (mousemove)="onMouseMoveCard($event)"
+      (mouseleave)="onMouseLeaveCard()">
+
+      <!-- Specular Dynamic Glare Layer -->
+      <div class="cyber-glare" [style.background]="glareStyle"></div>
+
+      <!-- Laser Scanner Beam (Active during Auth) -->
+      <div *ngIf="loading" class="cyber-laser-beam"></div>
+
+      <!-- Holographic Tech Corner Accents -->
+      <div class="cyber-corner tl"></div>
+      <div class="cyber-corner tr"></div>
+      <div class="cyber-corner bl"></div>
+      <div class="cyber-corner br"></div>
+
+      <!-- Card Top Brand & Orbital Ring -->
+      <div class="cyber-brand-section">
+        <div class="cyber-orbital-badge">
+          <div class="orbital-ring ring-1"></div>
+          <div class="orbital-ring ring-2"></div>
+          <div class="orbital-core">R</div>
+        </div>
+
+        <div class="cyber-title-group">
+          <div class="cyber-pre-title">QUANTUM LEDGER SYSTEM</div>
+          <h1 class="cyber-brand-title">Rent<span>Ledger</span></h1>
+          <p class="cyber-subtitle">High-Security Asset & Rent Intelligence</p>
         </div>
       </div>
 
-      <div class="login-field">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-          <label for="login-password" style="margin: 0;">Password</label>
-          <button
-            type="button"
-            class="text-btn"
-            style="padding: 0; background: transparent; font-size: 11px; text-transform: none;"
-            (click)="showPassword = !showPassword">
-            {{ showPassword ? 'Hide' : 'Show' }}
-          </button>
+      <!-- Error / Diagnostic Glitch Alert -->
+      <div *ngIf="error" class="cyber-alert-box">
+        <div class="alert-icon">⚠</div>
+        <div class="alert-content">
+          <div class="alert-code">{{ errorCode || 'AUTH_REJECTED' }}</div>
+          <div class="alert-msg">{{ error }}</div>
         </div>
-        <div class="input-with-icon">
-          <span class="field-icon">🔒</span>
-          <input
-            id="login-password"
-            [type]="showPassword ? 'text' : 'password'"
-            required
-            autocomplete="current-password"
-            placeholder="Enter password"
-            [(ngModel)]="password"
-            name="password"
-            [disabled]="loading" />
-        </div>
+        <button type="button" class="alert-close" (click)="error = ''">✕</button>
       </div>
 
-      <div class="login-options">
-        <label class="check">
-          <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" [disabled]="loading" />
-          <span>Keep me signed in</span>
-        </label>
+      <!-- Cyber Login Form -->
+      <form (ngSubmit)="onSubmit()" class="cyber-form">
+        <!-- Username Field -->
+        <div class="cyber-field">
+          <div class="cyber-label-row">
+            <label for="cyber-username">IDENTITY KEY // USERNAME</label>
+            <span class="field-hud-tag">ID:SEC-01</span>
+          </div>
+          <div class="cyber-input-wrap">
+            <span class="cyber-input-icon">⎔</span>
+            <input
+              id="cyber-username"
+              type="text"
+              required
+              autocomplete="username"
+              placeholder="Enter operator identity"
+              [(ngModel)]="username"
+              name="username"
+              [disabled]="loading" />
+            <div class="cyber-input-corner"></div>
+          </div>
+        </div>
+
+        <!-- Password Field with Cyber Entropy Meter -->
+        <div class="cyber-field">
+          <div class="cyber-label-row">
+            <label for="cyber-password">ACCESS CIPHER // PASSKEY</label>
+            <button
+              type="button"
+              class="cyber-toggle-pass"
+              (click)="showPassword = !showPassword"
+              tabindex="-1">
+              {{ showPassword ? 'OPTIC: REVEAL' : 'OPTIC: MASK' }}
+            </button>
+          </div>
+          <div class="cyber-input-wrap">
+            <span class="cyber-input-icon">⏣</span>
+            <input
+              id="cyber-password"
+              [type]="showPassword ? 'text' : 'password'"
+              required
+              autocomplete="current-password"
+              placeholder="Enter cryptographic key"
+              [(ngModel)]="password"
+              (input)="onPasswordChange()"
+              name="password"
+              [disabled]="loading" />
+            <div class="cyber-input-corner"></div>
+          </div>
+
+          <!-- Live Quantum Entropy Meter -->
+          <div class="quantum-entropy-bar" *ngIf="password">
+            <div class="entropy-track">
+              <div class="entropy-segment" [class.active]="quantumEntropy >= 25" [style.background]="entropyColor"></div>
+              <div class="entropy-segment" [class.active]="quantumEntropy >= 50" [style.background]="entropyColor"></div>
+              <div class="entropy-segment" [class.active]="quantumEntropy >= 75" [style.background]="entropyColor"></div>
+              <div class="entropy-segment" [class.active]="quantumEntropy >= 90" [style.background]="entropyColor"></div>
+            </div>
+            <div class="entropy-status" [style.color]="entropyColor">
+              <span>CIPHER STRENGTH:</span> <b>{{ entropyLabel }}</b>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session Persistence -->
+        <div class="cyber-options-row">
+          <label class="cyber-checkbox-label">
+            <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" [disabled]="loading" />
+            <span class="custom-cyber-box"></span>
+            <span class="checkbox-text">PERSIST QUANTUM TOKEN (30 DAYS)</span>
+          </label>
+        </div>
+
+        <!-- Submit Quantum Access Button -->
+        <button
+          type="submit"
+          class="cyber-submit-btn"
+          [disabled]="loading || !username || !password">
+          <div class="btn-glow-layer"></div>
+          <div class="btn-scan-border"></div>
+
+          <div *ngIf="!loading" class="btn-content">
+            <span class="btn-icon">⚡</span>
+            <span class="btn-text">INITIALIZE ACCESS SESSION</span>
+            <span class="btn-arrow">⯈</span>
+          </div>
+
+          <div *ngIf="loading" class="btn-content-loading">
+            <span class="cyber-spinner"></span>
+            <span class="loading-auth-text">{{ authPhase }}</span>
+          </div>
+        </button>
+      </form>
+
+      <!-- Bottom Card Diagnostics Footer -->
+      <div class="cyber-card-footer">
+        <div class="footer-badge">
+          <span class="badge-icon">◈</span>
+          <span>NIST PBKDF2-SHA256 ENCRYPTED</span>
+        </div>
+        <div class="footer-badge">
+          <span class="badge-icon">⬡</span>
+          <span>AIR-GAPPED DB SYNC</span>
+        </div>
       </div>
-
-      <button type="submit" class="btn primary login-submit-btn" [disabled]="loading || !username || !password">
-        <span *ngIf="!loading">Sign In to Dashboard →</span>
-        <span *ngIf="loading" style="display: inline-flex; align-items: center; gap: 8px;">
-          <span class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></span> Signing in…
-        </span>
-      </button>
-    </form>
-
-    <div class="login-footer">
-      <small>🔒 Secure session & encrypted database storage · RentLedger</small>
     </div>
+  </div>
+
+  <!-- Bottom Floating Coordinates & Version HUD -->
+  <div class="cyber-hud-bottombar">
+    <span>SYSTEM: RENTLEDGER-TX9000</span>
+    <span class="hide-mobile">SECURE PORTAL v2.5 // QUANTUM UI</span>
+    <span>ALL CHANNELS ENCRYPTED</span>
   </div>
 </div>

@@ -191,48 +191,709 @@ button, a {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
-.login-options {
+/* =========================================================
+   FUTURISTIC CYBER-PORTAL & QUANTUM LOGIN UI
+   ========================================================= */
+
+.cyber-login-universe {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  background: radial-gradient(circle at 50% 20%, #0f172a 0%, #090e1a 50%, #030712 100%);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.cyber-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.cyber-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(16, 185, 129, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(6, 182, 212, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at 50% 50%, black 40%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 40%, transparent 80%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.cyber-scanlines {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.6;
+}
+
+.cyber-ambient-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 2;
+  animation: cyberPulseGlow 10s infinite alternate ease-in-out;
+}
+
+.cyber-ambient-glow.glow-1 {
+  width: 450px;
+  height: 450px;
+  top: 15%;
+  left: 20%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, transparent 70%);
+}
+
+.cyber-ambient-glow.glow-2 {
+  width: 500px;
+  height: 500px;
+  bottom: 15%;
+  right: 18%;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.16) 0%, transparent 70%);
+  animation-delay: -5s;
+}
+
+@keyframes cyberPulseGlow {
+  0% { transform: scale(0.9) translate(0, 0); opacity: 0.6; }
+  50% { transform: scale(1.15) translate(20px, -15px); opacity: 0.9; }
+  100% { transform: scale(1) translate(-15px, 20px); opacity: 0.7; }
+}
+
+/* Top & Bottom HUD Telemetry Bars */
+.cyber-hud-topbar,
+.cyber-hud-bottombar {
+  position: relative;
+  z-index: 20;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  padding: 14px 28px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.8px;
+  color: #64748b;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
 }
 
-.login-submit-btn {
+.cyber-hud-bottombar {
+  border-bottom: none;
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
+  margin-top: auto;
+}
+
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.hud-dot.live-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: dotBlink 1.6s infinite ease-in-out;
+}
+
+@keyframes dotBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.hud-label {
+  color: #475569;
+  font-weight: 600;
+}
+
+.hud-value {
+  color: #10b981;
+  font-weight: 700;
+}
+
+.hud-clock {
+  color: #06b6d4;
+  letter-spacing: 1px;
+}
+
+/* Perspective Box & 3D Tilt Card */
+.cyber-card-perspective-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 18px;
+  perspective: 1200px;
+  z-index: 10;
+  position: relative;
+}
+
+.cyber-login-card {
   width: 100%;
-  padding: 11px;
+  max-width: 440px;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: 20px;
+  padding: 34px 30px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 25px 60px -15px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(16, 185, 129, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform-style: preserve-3d;
+  transition: box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+.cyber-login-card:hover {
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow: 
+    0 30px 70px -15px rgba(0, 0, 0, 0.9),
+    0 0 50px rgba(16, 185, 129, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.cyber-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  border-radius: 20px;
+}
+
+/* Laser Scanner Beam */
+.cyber-laser-beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #10b981, #06b6d4, transparent);
+  box-shadow: 0 0 18px 4px rgba(16, 185, 129, 0.85);
+  z-index: 15;
+  animation: laserScan 1.5s infinite ease-in-out alternate;
+  pointer-events: none;
+}
+
+@keyframes laserScan {
+  0% { top: 0%; opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { top: 100%; opacity: 0.3; }
+}
+
+/* Cyber Corner Accents */
+.cyber-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  z-index: 8;
+}
+
+.cyber-corner.tl {
+  top: 8px;
+  left: 8px;
+  border-top: 2px solid #10b981;
+  border-left: 2px solid #10b981;
+}
+
+.cyber-corner.tr {
+  top: 8px;
+  right: 8px;
+  border-top: 2px solid #06b6d4;
+  border-right: 2px solid #06b6d4;
+}
+
+.cyber-corner.bl {
+  bottom: 8px;
+  left: 8px;
+  border-bottom: 2px solid #06b6d4;
+  border-left: 2px solid #06b6d4;
+}
+
+.cyber-corner.br {
+  bottom: 8px;
+  right: 8px;
+  border-bottom: 2px solid #10b981;
+  border-right: 2px solid #10b981;
+}
+
+/* Brand Section & Orbital Rings */
+.cyber-brand-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 26px;
+  position: relative;
+  z-index: 5;
+}
+
+.cyber-orbital-badge {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orbital-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.orbital-ring.ring-1 {
+  border: 1.5px dashed rgba(16, 185, 129, 0.6);
+  animation: orbitClockwise 9s linear infinite;
+}
+
+.orbital-ring.ring-2 {
+  inset: -6px;
+  border: 1px dotted rgba(6, 182, 212, 0.45);
+  animation: orbitCounter 14s linear infinite;
+}
+
+@keyframes orbitClockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbitCounter {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.orbital-core {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #10b981 0%, #0d9488 50%, #0369a1 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 22px;
+  color: #ffffff;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.cyber-pre-title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #06b6d4;
+  margin-bottom: 4px;
+  text-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+}
+
+.cyber-brand-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+.cyber-brand-title span {
+  color: #10b981;
+  text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+}
+
+.cyber-subtitle {
+  font-size: 12.5px;
+  color: #94a3b8;
+  margin: 4px 0 0 0;
+  letter-spacing: 0.2px;
+}
+
+/* Alert Box */
+.cyber-alert-box {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  position: relative;
+  z-index: 5;
+  animation: alertGlitch 0.4s ease;
+}
+
+@keyframes alertGlitch {
+  0% { transform: translateX(-5px); }
+  25% { transform: translateX(5px); }
+  50% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+  100% { transform: translateX(0); }
+}
+
+.alert-icon {
+  color: #f87171;
+  font-size: 16px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #f87171;
+  letter-spacing: 0.6px;
+}
+
+.alert-msg {
+  font-size: 12px;
+  color: #fca5a5;
+  margin-top: 2px;
+}
+
+.alert-close {
+  background: transparent;
+  border: none;
+  color: #f87171;
   font-size: 14px;
-  border-radius: 9px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+/* Cyber Form & Fields */
+.cyber-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  z-index: 5;
+}
+
+.cyber-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cyber-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cyber-label-row label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  color: #94a3b8;
+}
+
+.field-hud-tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9.5px;
+  color: #475569;
+  letter-spacing: 0.5px;
+}
+
+.cyber-toggle-pass {
+  background: transparent;
+  border: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  color: #06b6d4;
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.5px;
+  transition: color 0.2s;
+}
+
+.cyber-toggle-pass:hover {
+  color: #38bdf8;
+  text-decoration: underline;
+}
+
+.cyber-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cyber-input-icon {
+  position: absolute;
+  left: 14px;
+  font-size: 14px;
+  color: #06b6d4;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.cyber-input-wrap input {
+  width: 100%;
+  background: rgba(3, 7, 18, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 10px;
+  padding: 12px 14px 12px 40px;
+  color: #f8fafc;
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.cyber-input-wrap input:focus {
+  border-color: #10b981;
+  background: rgba(3, 7, 18, 0.88);
+  box-shadow: 
+    0 0 18px rgba(16, 185, 129, 0.25),
+    inset 0 0 10px rgba(16, 185, 129, 0.08);
+}
+
+.cyber-input-wrap input::placeholder {
+  color: #475569;
+}
+
+/* Quantum Entropy Meter */
+.quantum-entropy-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   margin-top: 4px;
 }
 
-.login-error-alert {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 12.5px;
-  margin-bottom: 18px;
+.entropy-track {
+  display: flex;
+  gap: 4px;
+  height: 4px;
+}
+
+.entropy-segment {
+  flex: 1;
+  border-radius: 2px;
+  background: rgba(148, 163, 184, 0.15);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.entropy-segment.active {
+  box-shadow: 0 0 8px currentColor;
+}
+
+.entropy-status {
   display: flex;
   justify-content: space-between;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+}
+
+/* Cyber Checkbox */
+.cyber-options-row {
+  display: flex;
   align-items: center;
 }
 
-.login-error-alert button {
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font-size: 16px;
+.cyber-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   cursor: pointer;
-  padding: 0;
+  user-select: none;
 }
 
-.login-footer {
-  margin-top: 20px;
-  text-align: center;
-  color: var(--text-light);
+.cyber-checkbox-label input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.custom-cyber-box {
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 4px;
+  background: rgba(3, 7, 18, 0.6);
+  position: relative;
+  transition: all 0.2s;
+}
+
+.cyber-checkbox-label input:checked ~ .custom-cyber-box {
+  background: #10b981;
+  border-color: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.cyber-checkbox-label input:checked ~ .custom-cyber-box::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #030712;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.checkbox-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+}
+
+/* Futuristic Submit Button */
+.cyber-submit-btn {
+  position: relative;
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #0284c7 100%);
+  color: #ffffff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 
+    0 10px 25px -5px rgba(16, 185, 129, 0.4),
+    0 0 20px rgba(6, 182, 212, 0.25);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 6px;
+}
+
+.cyber-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 15px 35px -5px rgba(16, 185, 129, 0.6),
+    0 0 30px rgba(6, 182, 212, 0.45);
+}
+
+.cyber-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.cyber-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(40%);
+}
+
+.btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-icon {
+  font-size: 15px;
+}
+
+.btn-text {
+  letter-spacing: 1px;
+}
+
+.btn-arrow {
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+.cyber-submit-btn:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+.btn-content-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+}
+
+.cyber-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: cyberSpin 0.7s linear infinite;
+}
+
+@keyframes cyberSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Card Diagnostics Footer */
+.cyber-card-footer {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  color: #64748b;
+  letter-spacing: 0.5px;
+}
+
+.badge-icon {
+  color: #10b981;
   font-size: 11px;
 }
+
+/* Responsive Rules */
+@media (max-width: 640px) {
+  .hide-mobile {
+    display: none !important;
+  }
+  .cyber-hud-topbar,
+  .cyber-hud-bottombar {
+    padding: 10px 16px;
+    font-size: 10.5px;
+  }
+  .cyber-login-card {
+    padding: 26px 20px;
+  }
+  .cyber-brand-title {
+    font-size: 24px;
+  }
+}
+
 
 
