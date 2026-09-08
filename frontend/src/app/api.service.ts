@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Dashboard, Payment, Property, PropertyGroup, GroupTax, ElectricityBill, PropertyExpense, EditHistory, Tenant, Tenancy, RentRate, DepositRefund } from './models';
+import {
+  Dashboard, Payment, Property, PropertyGroup, GroupTax, ElectricityBill,
+  PropertyExpense, EditHistory, Tenant, Tenancy, RentRate, DepositRefund,
+  BackupStatus, GoogleDriveConfigModel, BackupHistoryItem
+} from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -37,5 +41,13 @@ export class ApiService {
   deleteDepositRefund(id: number) { return this.http.delete(`${this.base}/deposit-refunds/${id}`); }
   transferTenancy(body: object) { return this.http.post(`${this.base}/tenancies/transfer`, body); }
   exportUrl() { return `${this.base}/export`; }
+
+  // Cloud & Local Database Backups
+  backupStatus() { return this.http.get<BackupStatus>(`${this.base}/backup/status`); }
+  backupDownloadUrl() { return `${this.base}/backup/download`; }
+  saveGoogleDriveConfig(body: object) { return this.http.post<{ status: string, message: string }>(`${this.base}/backup/google-drive/config`, body); }
+  getGoogleDriveConfig() { return this.http.get<GoogleDriveConfigModel>(`${this.base}/backup/google-drive/config`); }
+  uploadGoogleDriveBackup() { return this.http.post<any>(`${this.base}/backup/google-drive/upload`, {}); }
+  googleDriveFiles() { return this.http.get<{ cloud_files: any[], history: BackupHistoryItem[] }>(`${this.base}/backup/google-drive/files`); }
 }
 

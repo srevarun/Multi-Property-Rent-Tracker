@@ -1,0 +1,237 @@
+<div class="modal-backdrop" (mousedown)="close.emit()">
+  <div class="modal" style="max-width: 680px;" (mousedown)="$event.stopPropagation()">
+    <button class="modal-close" (click)="close.emit()">×</button>
+
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+      <span style="font-size: 24px;">☁️</span>
+      <div>
+        <p class="eyebrow" style="margin: 0;">DATA PROTECTION & CLOUD STORAGE</p>
+        <h2 style="margin: 0;">Database Backup & Google Drive</h2>
+      </div>
+    </div>
+    <p class="modal-sub" style="margin-bottom: 16px;">
+      Protect your properties, rent collections, and tenancy history with automated Google Drive backups and ACID-safe snapshots.
+    </p>
+
+    <!-- Navigation Tabs -->
+    <div style="display: flex; border-bottom: 1px solid var(--line); margin-bottom: 20px; gap: 8px;">
+      <button type="button" class="filter-chip"
+        [class.active]="activeTab === 'overview'"
+        (click)="activeTab = 'overview'"
+        style="border-radius: 6px 6px 0 0; border-bottom: 0; padding: 8px 16px;">
+        📦 Overview & Backup
+      </button>
+      <button type="button" class="filter-chip"
+        [class.active]="activeTab === 'settings'"
+        (click)="activeTab = 'settings'"
+        style="border-radius: 6px 6px 0 0; border-bottom: 0; padding: 8px 16px;">
+        ⚙️ Google Drive Configuration
+      </button>
+    </div>
+
+    <!-- Alert / Toast Messages -->
+    <div *ngIf="message" style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
+      <span>✓ {{ message }}</span>
+      <button type="button" class="icon-btn" (click)="message = ''" style="color: #065f46;">×</button>
+    </div>
+
+    <div *ngIf="error" style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
+      <span>⚠ {{ error }}</span>
+      <button type="button" class="icon-btn" (click)="error = ''" style="color: #991b1b;">×</button>
+    </div>
+
+    <!-- TAB 1: OVERVIEW & BACKUP -->
+    <div *ngIf="activeTab === 'overview'">
+      <!-- Database Health & Stats Card -->
+      <div style="background: var(--ink-50); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 11px; font-weight: 700; color: var(--ink-600); text-transform: uppercase; letter-spacing: 0.5px;">
+            CURRENT DATABASE SNAPSHOT
+          </span>
+          <span class="pill" style="background: #e0f2fe; color: #0369a1;">
+            Size: {{ status?.db_size_formatted || 'Calculating...' }}
+          </span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center;">
+          <div style="background: #ffffff; border: 1px solid var(--line); padding: 10px; border-radius: 8px;">
+            <small style="font-size: 10px; font-weight: 700; color: var(--ink-500); text-transform: uppercase;">Properties</small>
+            <b style="display: block; font-size: 16px; color: var(--ink-900); margin-top: 2px;">{{ status?.stats?.properties || 0 }}</b>
+          </div>
+          <div style="background: #ffffff; border: 1px solid var(--line); padding: 10px; border-radius: 8px;">
+            <small style="font-size: 10px; font-weight: 700; color: var(--ink-500); text-transform: uppercase;">Rent Records</small>
+            <b style="display: block; font-size: 16px; color: var(--primary); margin-top: 2px;">{{ status?.stats?.payments || 0 }}</b>
+          </div>
+          <div style="background: #ffffff; border: 1px solid var(--line); padding: 10px; border-radius: 8px;">
+            <small style="font-size: 10px; font-weight: 700; color: var(--ink-500); text-transform: uppercase;">Tenancies</small>
+            <b style="display: block; font-size: 16px; color: #2563eb; margin-top: 2px;">{{ status?.stats?.tenancies || 0 }}</b>
+          </div>
+        </div>
+      </div>
+
+      <!-- Backup Actions -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+        <!-- Google Drive Backup Action -->
+        <div style="border: 1px solid #a7f3d0; background: #f0fdf4; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+              <span style="font-size: 18px;">☁️</span>
+              <strong style="font-size: 13.5px; color: #065f46;">Google Drive Cloud</strong>
+            </div>
+            <p style="font-size: 12px; color: #047857; margin: 0 0 14px 0; line-height: 1.4;">
+              Upload directly into your <b>{{ status?.folder_name || 'Rent Tracker Backups' }}</b> cloud folder.
+            </p>
+          </div>
+          <button type="button" class="btn primary"
+            style="width: 100%;"
+            [disabled]="backingUp"
+            (click)="triggerGoogleDriveBackup()">
+            <span *ngIf="!backingUp">☁️ Backup to Google Drive</span>
+            <span *ngIf="backingUp">⏳ Uploading Snapshot…</span>
+          </button>
+        </div>
+
+        <!-- Local Snapshot Download Action -->
+        <div style="border: 1px solid var(--ink-200); background: #ffffff; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+              <span style="font-size: 18px;">💾</span>
+              <strong style="font-size: 13.5px; color: var(--ink-900);">Instant Snapshot (.db)</strong>
+            </div>
+            <p style="font-size: 12px; color: var(--ink-600); margin: 0 0 14px 0; line-height: 1.4;">
+              Download a consistent, uncorrupted SQLite database file to your device or local drive.
+            </p>
+          </div>
+          <a class="btn secondary"
+            style="width: 100%; text-align: center;"
+            [href]="api.backupDownloadUrl()"
+            target="_blank"
+            download>
+            ⇩ Download Database File
+          </a>
+        </div>
+      </div>
+
+      <!-- Cloud Status Banner -->
+      <div *ngIf="status?.is_google_drive_configured" style="background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--ink-700); margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span>Google Drive Status: </span>
+          <span style="font-weight: 700; color: #059669;">● Connected</span>
+          <span *ngIf="status?.last_backup_at" style="color: var(--ink-500); margin-left: 8px;">
+            (Last backup: {{ status?.last_backup_at }})
+          </span>
+        </div>
+        <button type="button" class="text-btn" (click)="activeTab = 'settings'">Settings</button>
+      </div>
+
+      <div *ngIf="!status?.is_google_drive_configured" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #92400e; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span>⚠ Google Drive is not configured yet. Set up your Service Account JSON or local sync path in Settings.</span>
+        </div>
+        <button type="button" class="btn secondary" style="font-size: 11px; padding: 4px 8px;" (click)="activeTab = 'settings'">Configure Now</button>
+      </div>
+
+      <!-- Backup History Log -->
+      <div>
+        <h3 style="font-size: 13px; font-weight: 700; color: var(--ink-800); text-transform: uppercase; letter-spacing: 0.4px; margin: 0 0 8px 0;">
+          Recent Backup Activity
+        </h3>
+        <div style="border: 1px solid var(--line); border-radius: 8px; overflow: hidden; max-height: 180px; overflow-y: auto;">
+          <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #fafbfb; border-bottom: 1px solid var(--line);">
+                <th style="padding: 8px 12px; text-align: left;">Date & Time</th>
+                <th style="padding: 8px 12px; text-align: left;">Target</th>
+                <th style="padding: 8px 12px; text-align: left;">File Name</th>
+                <th style="padding: 8px 12px; text-align: left;">Size</th>
+                <th style="padding: 8px 12px; text-align: right;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let h of status?.history" style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 12px; color: var(--ink-600);">{{ h.created_at }}</td>
+                <td style="padding: 8px 12px;">
+                  <span *ngIf="h.backup_type === 'google_drive'" style="color: #059669; font-weight: 600;">☁️ Google Drive</span>
+                  <span *ngIf="h.backup_type === 'download'" style="color: #2563eb; font-weight: 600;">💾 Download</span>
+                  <span *ngIf="h.backup_type === 'local_drive'" style="color: #7c3aed; font-weight: 600;">📁 Local Sync</span>
+                </td>
+                <td style="padding: 8px 12px; font-family: monospace; font-size: 11px;">{{ h.filename }}</td>
+                <td style="padding: 8px 12px;">{{ formatSize(h.file_size) }}</td>
+                <td style="padding: 8px 12px; text-align: right;">
+                  <span [style.color]="h.status === 'success' ? '#059669' : '#dc2626'" style="font-weight: 700;">
+                    {{ h.status === 'success' ? '✓ Saved' : '✕ Failed' }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="!status?.history?.length">
+                <td colspan="5" style="padding: 20px; text-align: center; color: var(--ink-500);">
+                  No backups recorded yet. Click "Backup to Google Drive" or "Download Database File" above.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: SETTINGS -->
+    <div *ngIf="activeTab === 'settings'">
+      <form (ngSubmit)="saveSettings()">
+        <div class="form-grid">
+          <div class="full" style="background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 12px; color: var(--ink-700);">
+            <strong>💡 How Google Drive Integration Works:</strong>
+            <ul style="margin: 6px 0 0 0; padding-left: 18px; line-height: 1.5;">
+              <li><b>Service Account (Recommended):</b> Paste your Google Cloud Service Account JSON key below. Backups upload directly in the background without browser popups.</li>
+              <li><b>Local Google Drive Folder:</b> If you use the Google Drive desktop app, specify your sync path (e.g. <code>~/Google Drive/Rent Tracker Backups</code>).</li>
+            </ul>
+          </div>
+
+          <label class="full">
+            Target Google Drive Folder Name
+            <input [(ngModel)]="configForm.folder_name" name="folder_name" placeholder="Rent Tracker Backups">
+          </label>
+
+          <label class="full">
+            Specific Google Drive Folder ID (Optional)
+            <input [(ngModel)]="configForm.folder_id" name="folder_id" placeholder="e.g. 1a2B3c4D... (Leave blank to auto-create folder)">
+          </label>
+
+          <!-- Service Account JSON -->
+          <label class="full">
+            Google Service Account Key (JSON)
+            <span *ngIf="config?.has_service_account" style="color: #059669; font-weight: 600; text-transform: none;">
+              ✓ Currently Configured: {{ config?.masked_service_account }}
+            </span>
+            <textarea
+              [(ngModel)]="configForm.service_account_json"
+              name="sa_json"
+              placeholder='Paste entire service account JSON here: {"type": "service_account", "project_id": ...}'
+              style="min-height: 90px; font-family: monospace; font-size: 11.5px;"></textarea>
+          </label>
+
+          <!-- Alternative: Local Google Drive Folder Path -->
+          <label class="full">
+            Or Local Google Drive Sync Folder Path (Optional)
+            <input [(ngModel)]="configForm.local_drive_path" name="local_drive_path" placeholder="e.g. /Users/yourname/Google Drive/Rent Tracker Backups">
+          </label>
+
+          <!-- Alternative: OAuth Bearer Token -->
+          <label class="full">
+            Or OAuth2 Access Token (Optional)
+            <span *ngIf="config?.has_access_token" style="color: #059669; font-weight: 600; text-transform: none;">
+              ✓ Currently Configured: {{ config?.masked_access_token }}
+            </span>
+            <input [(ngModel)]="configForm.access_token" name="access_token" placeholder="Bearer ya29....">
+          </label>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 20px;">
+          <button type="button" class="btn secondary" (click)="activeTab = 'overview'">Back to Overview</button>
+          <button type="submit" class="btn primary" [disabled]="savingConfig">
+            {{ savingConfig ? 'Saving Settings…' : 'Save Configuration' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -8,7 +8,8 @@ app-groups-view,
 app-electricity-view,
 app-history-view,
 app-tenants-view,
-app-archive {
+app-archive,
+app-backup-modal {
   display: block;
   width: 100%;
 }

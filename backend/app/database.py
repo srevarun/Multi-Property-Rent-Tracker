@@ -183,6 +183,34 @@ def init_db() -> None:
             );
             CREATE INDEX IF NOT EXISTS idx_property_expenses_property ON property_expenses(property_id);
             CREATE INDEX IF NOT EXISTS idx_property_expenses_date ON property_expenses(expense_date);
+
+            CREATE TABLE IF NOT EXISTS backup_config (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                provider TEXT NOT NULL DEFAULT 'google_drive',
+                service_account_json TEXT DEFAULT '',
+                access_token TEXT DEFAULT '',
+                folder_id TEXT DEFAULT '',
+                folder_name TEXT DEFAULT 'Rent Tracker Backups',
+                local_drive_path TEXT DEFAULT '',
+                last_backup_at TEXT DEFAULT '',
+                last_backup_status TEXT DEFAULT '',
+                last_backup_file_id TEXT DEFAULT '',
+                last_backup_file_name TEXT DEFAULT '',
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+
+            INSERT OR IGNORE INTO backup_config (id, provider) VALUES (1, 'google_drive');
+
+            CREATE TABLE IF NOT EXISTS backup_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                backup_type TEXT NOT NULL DEFAULT 'google_drive',
+                filename TEXT NOT NULL,
+                file_size INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                details TEXT DEFAULT '',
+                file_id TEXT DEFAULT '',
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
         """)
         refund_columns = {row['name'] for row in connection.execute('PRAGMA table_info(deposit_refunds)')}
         if 'is_final_settlement' not in refund_columns:

@@ -12,6 +12,7 @@ import { ElectricityComponent } from './components/electricity/electricity.compo
 import { ExpensesComponent } from './components/expenses/expenses.component';
 import { TenantsComponent } from './components/tenants/tenants.component';
 import { HistoryComponent } from './components/history/history.component';
+import { BackupModalComponent } from './components/backup/backup-modal.component';
 import {
   Dashboard, Payment, Property, PropertyGroup, GroupTax,
   ElectricityBill, PropertyExpense, EditHistory, Tenant, Tenancy, RentRate, DepositRefund
@@ -34,7 +35,8 @@ type View = 'tenants' | 'history' | 'dashboard' | 'properties' | 'payments' | 'g
     ElectricityComponent,
     ExpensesComponent,
     TenantsComponent,
-    HistoryComponent
+    HistoryComponent,
+    BackupModalComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
@@ -44,7 +46,7 @@ export class AppComponent implements OnInit {
   loading = true;
   error = '';
   toast = '';
-  modal: 'property' | 'payment' | 'group' | 'tax' | 'electricity' | 'collection' | 'expense' | 'tenant' | 'tenancy' | 'rate' | 'refund' | 'transfer' | null = null;
+  modal: 'property' | 'payment' | 'group' | 'tax' | 'electricity' | 'collection' | 'expense' | 'tenant' | 'tenancy' | 'rate' | 'refund' | 'transfer' | 'backup' | null = null;
   selectedMonth = new Date().toISOString().slice(0, 7);
   propertyTenantSearch: string = '';
   search = '';
@@ -274,6 +276,10 @@ export class AppComponent implements OnInit {
   }
 
   // --- Modal Open Actions ---
+  openBackup() {
+    this.modal = 'backup';
+  }
+
   openProperty(property?: Property) {
     if (property) {
       this.propertyForm = {

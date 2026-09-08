@@ -38,3 +38,43 @@ export interface TenancyTransfer {
   transfer_notes: string;
 }
 
+export interface BackupHistoryItem {
+  id: number;
+  backup_type: string;
+  filename: string;
+  file_size: number;
+  status: string;
+  details: string;
+  file_id: string;
+  created_at: string;
+}
+
+export interface BackupStatus {
+  db_size_bytes: number;
+  db_size_formatted: string;
+  stats: { properties: number; payments: number; tenancies: number };
+  is_google_drive_configured: boolean;
+  configured_method: 'service_account' | 'access_token' | 'local_path' | 'none';
+  folder_name: string;
+  folder_id: string;
+  local_drive_path: string;
+  last_backup_at: string;
+  last_backup_status: string;
+  last_backup_file_name: string;
+  history: BackupHistoryItem[];
+}
+
+export interface GoogleDriveConfigModel {
+  has_service_account: boolean;
+  service_account_email: string;
+  masked_service_account: string;
+  has_access_token: boolean;
+  masked_access_token: string;
+  folder_id: string;
+  folder_name: string;
+  local_drive_path: string;
+  last_backup_at: string;
+  last_backup_status: string;
+}
+
+

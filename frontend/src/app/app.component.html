@@ -31,6 +31,7 @@
         <h1>{{ view === 'dashboard' ? 'Good morning' : view === 'properties' ? 'Properties' : view === 'expenses' ? 'Property expenses' : view === 'groups' ? 'Groups & taxes' : view === 'electricity' ? 'Electricity' : view === 'history' ? 'Edit history' : view === 'tenants' ? 'Tenants & tenancies' : view === 'archive' ? 'Archive & books' : 'Rent history' }}</h1>
       </div>
       <div class="header-actions">
+        <button class="btn secondary" (click)="openBackup()" title="Backup database to Google Drive or download snapshot">☁️ Cloud Backup</button>
         <a class="btn secondary" [href]="api.exportUrl()">⇩ Export Excel</a>
         <button *ngIf="view === 'expenses'" class="btn primary" (click)="openExpense()">＋ Record expense</button>
         <button *ngIf="view !== 'expenses'" class="btn primary" (click)="openPayment()">＋ Record rent</button>
@@ -750,4 +751,8 @@
   </div>
 </div>
 
+<!-- Cloud Backup & Database Snapshot Modal -->
+<app-backup-modal *ngIf="modal === 'backup'" (close)="modal = null"></app-backup-modal>
+
 <div class="toast" *ngIf="toast">✓ {{ toast }}</div>
+
