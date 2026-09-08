@@ -1,10 +1,37 @@
+# Python
 backend/.venv/
 backend/__pycache__/
 backend/app/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# SQLite Databases & Lock/Journal Files
 backend/rent_tracker.db
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.db-lock
+*.sqlite
+*.sqlite3
+
+# Node & Angular
 frontend/node_modules/
 frontend/dist/
 frontend/.angular/
 .angular/
-*.db-lock
+**/node_modules/
+**/dist/
+
+# OS & Editor
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.vscode/
+.idea/
+
