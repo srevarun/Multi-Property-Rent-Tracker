@@ -18,11 +18,17 @@ router = APIRouter(prefix="/api/backup", tags=["backup"])
 
 
 class GoogleDriveConfig(BaseModel):
+    client_id: Optional[str] = None
     service_account_json: Optional[str] = None
     access_token: Optional[str] = None
     folder_id: Optional[str] = None
     folder_name: Optional[str] = "Rent Tracker Backups"
     local_drive_path: Optional[str] = None
+
+
+class OAuthConnectPayload(BaseModel):
+    access_token: str
+    client_id: Optional[str] = None
 
 
 def init_backup_tables():
@@ -32,6 +38,9 @@ def init_backup_tables():
             CREATE TABLE IF NOT EXISTS backup_config (
                 id INTEGER PRIMARY KEY CHECK (id = 1),
                 provider TEXT NOT NULL DEFAULT 'google_drive',
+                client_id TEXT DEFAULT '',
+                oauth_email TEXT DEFAULT '',
+                oauth_name TEXT DEFAULT '',
                 service_account_json TEXT DEFAULT '',
                 access_token TEXT DEFAULT '',
                 folder_id TEXT DEFAULT '',
@@ -58,6 +67,10 @@ def init_backup_tables():
             );
             """
         )
+        cols = {row["name"] for row in conn.execute("PRAGMA table_info(backup_config)").fetchall()}
+        for col, col_type in [("client_id", "TEXT DEFAULT ''"), ("oauth_email", "TEXT DEFAULT ''"), ("oauth_name", "TEXT DEFAULT ''")]:
+            if col not in cols:
+                conn.execute(f"ALTER TABLE backup_config ADD COLUMN {col} {col_type}")
 
 
 try:
@@ -113,6 +126,7 @@ def get_backup_status():
     has_sa = bool(config_data.get("service_account_json", "").strip())
     has_token = bool(config_data.get("access_token", "").strip())
     has_local = bool(config_data.get("local_drive_path", "").strip())
+    oauth_email = config_data.get("oauth_email", "")
 
     return {
         "db_size_bytes": db_size,
@@ -123,7 +137,10 @@ def get_backup_status():
             "tenancies": tenancy_count
         },
         "is_google_drive_configured": has_sa or has_token or has_local,
-        "configured_method": "service_account" if has_sa else "access_token" if has_token else "local_path" if has_local else "none",
+        "configured_method": "oauth_sso" if (has_token and oauth_email) else "access_token" if has_token else "service_account" if has_sa else "local_path" if has_local else "none",
+        "oauth_email": oauth_email,
+        "oauth_name": config_data.get("oauth_name", ""),
+        "client_id": config_data.get("client_id", ""),
         "folder_name": config_data.get("folder_name", "Rent Tracker Backups"),
         "folder_id": config_data.get("folder_id", ""),
         "local_drive_path": config_data.get("local_drive_path", ""),
@@ -137,6 +154,7 @@ def get_backup_status():
 @router.get("/download")
 def download_database_snapshot(background_tasks: BackgroundTasks):
     """Generates an instant online SQLite backup and returns it as a downloadable file."""
+    init_backup_tables()
     tmp_path, filename, size = create_sqlite_snapshot()
     background_tasks.add_task(cleanup_file, tmp_path)
 
@@ -162,6 +180,7 @@ def save_google_drive_config(payload: GoogleDriveConfig):
         conn.execute(
             """
             UPDATE backup_config SET
+                client_id = COALESCE(?, client_id),
                 service_account_json = COALESCE(?, service_account_json),
                 access_token = COALESCE(?, access_token),
                 folder_id = COALESCE(?, folder_id),
@@ -171,6 +190,7 @@ def save_google_drive_config(payload: GoogleDriveConfig):
             WHERE id = 1
             """,
             (
+                payload.client_id if payload.client_id is not None else None,
                 payload.service_account_json if payload.service_account_json is not None else None,
                 payload.access_token if payload.access_token is not None else None,
                 payload.folder_id if payload.folder_id is not None else None,
@@ -206,6 +226,9 @@ def get_google_drive_config():
     masked_token = f"{token[:6]}...{token[-4:]}" if len(token) > 10 else ("Configured" if token else "")
 
     return {
+        "client_id": row["client_id"] or "",
+        "oauth_email": row["oauth_email"] or "",
+        "oauth_name": row["oauth_name"] or "",
         "has_service_account": bool(sa.strip()),
         "service_account_email": client_email,
         "masked_service_account": masked_sa,
@@ -217,6 +240,66 @@ def get_google_drive_config():
         "last_backup_at": row["last_backup_at"] or "",
         "last_backup_status": row["last_backup_status"] or ""
     }
+
+
+@router.post("/google-drive/connect")
+def connect_google_drive_oauth(payload: OAuthConnectPayload):
+    """Connects Google Account using access token from Google SSO popup."""
+    init_backup_tables()
+    token = payload.access_token.strip()
+    if not token:
+        raise HTTPException(status_code=400, detail="Access token is required")
+
+    email = ""
+    name = ""
+    try:
+        userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+        req = urllib.request.Request(userinfo_url, headers={"Authorization": f"Bearer {token}"})
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            email = data.get("email", "")
+            name = data.get("name", "")
+    except Exception:
+        email = "Google Account"
+
+    with db() as conn:
+        conn.execute(
+            """
+            UPDATE backup_config SET
+                access_token = ?,
+                oauth_email = ?,
+                oauth_name = ?,
+                client_id = COALESCE(NULLIF(?, ''), client_id),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = 1
+            """,
+            (token, email, name, payload.client_id or None)
+        )
+
+    return {
+        "status": "connected",
+        "email": email,
+        "name": name,
+        "message": f"Successfully connected Google Account ({email})!"
+    }
+
+
+@router.post("/google-drive/disconnect")
+def disconnect_google_drive():
+    """Disconnects Google Account and removes access token."""
+    init_backup_tables()
+    with db() as conn:
+        conn.execute(
+            """
+            UPDATE backup_config SET
+                access_token = '',
+                oauth_email = '',
+                oauth_name = '',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = 1
+            """
+        )
+    return {"status": "disconnected", "message": "Google Account disconnected."}
 
 
 def get_oauth_token_from_service_account(sa_json_str: str) -> str:
@@ -336,7 +419,7 @@ def upload_backup_to_google_drive():
         else:
             raise HTTPException(
                 status_code=400,
-                detail="No Google Drive authentication configured. Please provide a Service Account JSON, OAuth Token, or Local Google Drive folder path in Backup Settings."
+                detail="No Google Drive authentication configured. Click 'Sign in with Google' or provide a Service Account JSON in Backup Settings."
             )
 
         dest_folder_id = folder_id

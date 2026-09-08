@@ -5,12 +5,12 @@
     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
       <span style="font-size: 24px;">☁️</span>
       <div>
-        <p class="eyebrow" style="margin: 0;">DATA PROTECTION & CLOUD STORAGE</p>
+        <p class="eyebrow" style="margin: 0;">CLOUD DATA PROTECTION</p>
         <h2 style="margin: 0;">Database Backup & Google Drive</h2>
       </div>
     </div>
     <p class="modal-sub" style="margin-bottom: 16px;">
-      Protect your properties, rent collections, and tenancy history with automated Google Drive backups and ACID-safe snapshots.
+      Protect your properties, rent collections, and tenancies with 1-click Google Drive cloud backups and instant SQLite snapshots.
     </p>
 
     <!-- Navigation Tabs -->
@@ -25,7 +25,7 @@
         [class.active]="activeTab === 'settings'"
         (click)="activeTab = 'settings'"
         style="border-radius: 6px 6px 0 0; border-bottom: 0; padding: 8px 16px;">
-        ⚙️ Google Drive Configuration
+        ⚙️ Google Connection Settings
       </button>
     </div>
 
@@ -42,6 +42,57 @@
 
     <!-- TAB 1: OVERVIEW & BACKUP -->
     <div *ngIf="activeTab === 'overview'">
+      <!-- Google SSO Status Bar -->
+      <div *ngIf="status?.is_google_drive_configured" style="background: #f0fdf4; border: 1px solid #a7f3d0; border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #ffffff; display: grid; place-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          </div>
+          <div>
+            <div style="font-size: 13px; font-weight: 700; color: #065f46;">
+              Connected with Google Drive
+            </div>
+            <div style="font-size: 12px; color: #047857;">
+              {{ status?.oauth_email || status?.oauth_name || status?.folder_name }}
+              <span *ngIf="status?.last_backup_at" style="color: #64748b; margin-left: 6px;">
+                · Last backup: {{ status?.last_backup_at }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn primary" [disabled]="backingUp" (click)="triggerGoogleDriveBackup()" style="font-size: 12.5px; padding: 6px 12px;">
+            <span *ngIf="!backingUp">☁️ Backup Now</span>
+            <span *ngIf="backingUp">⏳ Backing up…</span>
+          </button>
+          <button type="button" class="btn secondary" (click)="disconnectGoogle()" style="font-size: 12px; padding: 6px 10px; color: #dc2626;" title="Disconnect Google Account">
+            Disconnect
+          </button>
+        </div>
+      </div>
+
+      <!-- Not Connected Google SSO Connect Prompt -->
+      <div *ngIf="!status?.is_google_drive_configured" style="background: #ffffff; border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: #f8fafc; border: 1px solid var(--line); display: grid; place-items: center;">
+            <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          </div>
+          <div>
+            <strong style="display: block; font-size: 14px; color: var(--ink-900);">Sign in with Google</strong>
+            <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--ink-500);">Connect your Google Account with 1 click to enable automatic Drive backups.</p>
+          </div>
+        </div>
+
+        <button type="button" class="btn secondary"
+          style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px;"
+          [disabled]="connectingSSO"
+          (click)="connectWithGoogleSSO()">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          <span *ngIf="!connectingSSO">Connect with Google</span>
+          <span *ngIf="connectingSSO">Connecting Google…</span>
+        </button>
+      </div>
+
       <!-- Database Health & Stats Card -->
       <div style="background: var(--ink-50); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 18px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -69,66 +120,24 @@
         </div>
       </div>
 
-      <!-- Backup Actions -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-        <!-- Google Drive Backup Action -->
-        <div style="border: 1px solid #a7f3d0; background: #f0fdf4; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-              <span style="font-size: 18px;">☁️</span>
-              <strong style="font-size: 13.5px; color: #065f46;">Google Drive Cloud</strong>
-            </div>
-            <p style="font-size: 12px; color: #047857; margin: 0 0 14px 0; line-height: 1.4;">
-              Upload directly into your <b>{{ status?.folder_name || 'Rent Tracker Backups' }}</b> cloud folder.
-            </p>
-          </div>
-          <button type="button" class="btn primary"
-            style="width: 100%;"
-            [disabled]="backingUp"
-            (click)="triggerGoogleDriveBackup()">
-            <span *ngIf="!backingUp">☁️ Backup to Google Drive</span>
-            <span *ngIf="backingUp">⏳ Uploading Snapshot…</span>
-          </button>
-        </div>
-
-        <!-- Local Snapshot Download Action -->
-        <div style="border: 1px solid var(--ink-200); background: #ffffff; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-              <span style="font-size: 18px;">💾</span>
-              <strong style="font-size: 13.5px; color: var(--ink-900);">Instant Snapshot (.db)</strong>
-            </div>
-            <p style="font-size: 12px; color: var(--ink-600); margin: 0 0 14px 0; line-height: 1.4;">
-              Download a consistent, uncorrupted SQLite database file to your device or local drive.
-            </p>
-          </div>
-          <a class="btn secondary"
-            style="width: 100%; text-align: center;"
-            [href]="api.backupDownloadUrl()"
-            target="_blank"
-            download>
-            ⇩ Download Database File
-          </a>
-        </div>
-      </div>
-
-      <!-- Cloud Status Banner -->
-      <div *ngIf="status?.is_google_drive_configured" style="background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--ink-700); margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;">
+      <!-- Local Snapshot Download Action Card -->
+      <div style="border: 1px solid var(--ink-200); background: #ffffff; border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <div>
-          <span>Google Drive Status: </span>
-          <span style="font-weight: 700; color: #059669;">● Connected</span>
-          <span *ngIf="status?.last_backup_at" style="color: var(--ink-500); margin-left: 8px;">
-            (Last backup: {{ status?.last_backup_at }})
-          </span>
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+            <span style="font-size: 18px;">💾</span>
+            <strong style="font-size: 13.5px; color: var(--ink-900);">Download Local Database Snapshot (.db)</strong>
+          </div>
+          <p style="font-size: 12px; color: var(--ink-500); margin: 0;">
+            Download an uncorrupted, ACID-consistent SQLite database backup to your computer or USB drive.
+          </p>
         </div>
-        <button type="button" class="text-btn" (click)="activeTab = 'settings'">Settings</button>
-      </div>
-
-      <div *ngIf="!status?.is_google_drive_configured" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #92400e; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <span>⚠ Google Drive is not configured yet. Set up your Service Account JSON or local sync path in Settings.</span>
-        </div>
-        <button type="button" class="btn secondary" style="font-size: 11px; padding: 4px 8px;" (click)="activeTab = 'settings'">Configure Now</button>
+        <a class="btn secondary"
+          style="text-align: center;"
+          [href]="api.backupDownloadUrl()"
+          target="_blank"
+          download>
+          ⇩ Download .db File
+        </a>
       </div>
 
       <!-- Backup History Log -->
@@ -165,7 +174,7 @@
               </tr>
               <tr *ngIf="!status?.history?.length">
                 <td colspan="5" style="padding: 20px; text-align: center; color: var(--ink-500);">
-                  No backups recorded yet. Click "Backup to Google Drive" or "Download Database File" above.
+                  No backups recorded yet. Connect Google Drive or download a snapshot above.
                 </td>
               </tr>
             </tbody>
@@ -178,13 +187,20 @@
     <div *ngIf="activeTab === 'settings'">
       <form (ngSubmit)="saveSettings()">
         <div class="form-grid">
-          <div class="full" style="background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 12px; color: var(--ink-700);">
-            <strong>💡 How Google Drive Integration Works:</strong>
-            <ul style="margin: 6px 0 0 0; padding-left: 18px; line-height: 1.5;">
-              <li><b>Service Account (Recommended):</b> Paste your Google Cloud Service Account JSON key below. Backups upload directly in the background without browser popups.</li>
-              <li><b>Local Google Drive Folder:</b> If you use the Google Drive desktop app, specify your sync path (e.g. <code>~/Google Drive/Rent Tracker Backups</code>).</li>
-            </ul>
+          <div class="full" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; font-size: 12px; color: #166534;">
+            <strong>🚀 Quick Setup: Google Sign-In (SSO)</strong>
+            <ol style="margin: 6px 0 0 0; padding-left: 18px; line-height: 1.5;">
+              <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #15803d; font-weight: 700; text-decoration: underline;">Google Cloud Credentials Console</a>.</li>
+              <li>Create an <b>OAuth 2.0 Client ID</b> (Web application).</li>
+              <li>Add <code>http://localhost:4200</code> under <i>Authorized JavaScript origins</i>.</li>
+              <li>Paste the <b>Client ID</b> below and click <b>Save</b>, then click <b>Connect with Google</b>!</li>
+            </ol>
           </div>
+
+          <label class="full">
+            Google OAuth 2.0 Client ID <span style="color: #ef4444;">*</span>
+            <input [(ngModel)]="configForm.client_id" name="client_id" placeholder="e.g. 123456789-abcdefgh.apps.googleusercontent.com">
+          </label>
 
           <label class="full">
             Target Google Drive Folder Name
@@ -193,20 +209,7 @@
 
           <label class="full">
             Specific Google Drive Folder ID (Optional)
-            <input [(ngModel)]="configForm.folder_id" name="folder_id" placeholder="e.g. 1a2B3c4D... (Leave blank to auto-create folder)">
-          </label>
-
-          <!-- Service Account JSON -->
-          <label class="full">
-            Google Service Account Key (JSON)
-            <span *ngIf="config?.has_service_account" style="color: #059669; font-weight: 600; text-transform: none;">
-              ✓ Currently Configured: {{ config?.masked_service_account }}
-            </span>
-            <textarea
-              [(ngModel)]="configForm.service_account_json"
-              name="sa_json"
-              placeholder='Paste entire service account JSON here: {"type": "service_account", "project_id": ...}'
-              style="min-height: 90px; font-family: monospace; font-size: 11.5px;"></textarea>
+            <input [(ngModel)]="configForm.folder_id" name="folder_id" placeholder="Leave blank to automatically create/use folder">
           </label>
 
           <!-- Alternative: Local Google Drive Folder Path -->
@@ -215,13 +218,17 @@
             <input [(ngModel)]="configForm.local_drive_path" name="local_drive_path" placeholder="e.g. /Users/yourname/Google Drive/Rent Tracker Backups">
           </label>
 
-          <!-- Alternative: OAuth Bearer Token -->
+          <!-- Alternative: Service Account JSON -->
           <label class="full">
-            Or OAuth2 Access Token (Optional)
-            <span *ngIf="config?.has_access_token" style="color: #059669; font-weight: 600; text-transform: none;">
-              ✓ Currently Configured: {{ config?.masked_access_token }}
+            Or Google Service Account Key (JSON) for Headless Servers (Optional)
+            <span *ngIf="config?.has_service_account" style="color: #059669; font-weight: 600; text-transform: none;">
+              ✓ Currently Configured: {{ config?.masked_service_account }}
             </span>
-            <input [(ngModel)]="configForm.access_token" name="access_token" placeholder="Bearer ya29....">
+            <textarea
+              [(ngModel)]="configForm.service_account_json"
+              name="sa_json"
+              placeholder='Optional Service Account JSON for headless servers'
+              style="min-height: 60px; font-family: monospace; font-size: 11.5px;"></textarea>
           </label>
         </div>
 

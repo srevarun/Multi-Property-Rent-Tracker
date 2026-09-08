@@ -47,6 +47,8 @@ export class ApiService {
   backupDownloadUrl() { return `${this.base}/backup/download`; }
   saveGoogleDriveConfig(body: object) { return this.http.post<{ status: string, message: string }>(`${this.base}/backup/google-drive/config`, body); }
   getGoogleDriveConfig() { return this.http.get<GoogleDriveConfigModel>(`${this.base}/backup/google-drive/config`); }
+  connectGoogleDriveOAuth(access_token: string, client_id?: string) { return this.http.post<{ status: string, email: string, name: string, message: string }>(`${this.base}/backup/google-drive/connect`, { access_token, client_id }); }
+  disconnectGoogleDrive() { return this.http.post<{ status: string, message: string }>(`${this.base}/backup/google-drive/disconnect`, {}); }
   uploadGoogleDriveBackup() { return this.http.post<any>(`${this.base}/backup/google-drive/upload`, {}); }
   googleDriveFiles() { return this.http.get<{ cloud_files: any[], history: BackupHistoryItem[] }>(`${this.base}/backup/google-drive/files`); }
 }

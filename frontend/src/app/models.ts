@@ -54,7 +54,10 @@ export interface BackupStatus {
   db_size_formatted: string;
   stats: { properties: number; payments: number; tenancies: number };
   is_google_drive_configured: boolean;
-  configured_method: 'service_account' | 'access_token' | 'local_path' | 'none';
+  configured_method: 'oauth_sso' | 'service_account' | 'access_token' | 'local_path' | 'none';
+  oauth_email?: string;
+  oauth_name?: string;
+  client_id?: string;
   folder_name: string;
   folder_id: string;
   local_drive_path: string;
@@ -65,6 +68,9 @@ export interface BackupStatus {
 }
 
 export interface GoogleDriveConfigModel {
+  client_id: string;
+  oauth_email: string;
+  oauth_name: string;
   has_service_account: boolean;
   service_account_email: string;
   masked_service_account: string;
