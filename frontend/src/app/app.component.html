@@ -23,10 +23,10 @@
       <button [class.active]="view === 'archive'" (click)="setView('archive')"><span class="icon">📖</span> Archive & books</button>
     </nav>
     <div class="side-footer">
-      <div class="avatar">{{ (currentUser?.full_name || 'Srevarun Somasundaram').slice(0, 2).toUpperCase() }}</div>
+      <div class="avatar">{{ (currentUser?.full_name || currentUser?.username || 'User').slice(0, 2).toUpperCase() }}</div>
       <div style="flex: 1; min-width: 0;">
-        <strong style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ currentUser?.full_name || 'Srevarun Somasundaram' }}</strong>
-        <small>&#64;{{ currentUser?.username || 'srevarun' }}</small>
+        <strong style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ currentUser?.full_name || currentUser?.username || 'User' }}</strong>
+        <small *ngIf="currentUser?.username">&#64;{{ currentUser?.username }}</small>
       </div>
       <button type="button" class="icon-btn" (click)="logout()" title="Log out" style="color: #94a3b8; font-size: 16px;">🚪</button>
     </div>

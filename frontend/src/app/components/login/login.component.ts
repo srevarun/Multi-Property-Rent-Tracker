@@ -14,7 +14,7 @@ import { AuthUser } from "../../models";
 export class LoginComponent {
   @Output() loggedIn = new EventEmitter<AuthUser>();
 
-  username = "srevarun";
+  username = "";
   password = "";
   rememberMe = true;
   showPassword = false;
@@ -49,11 +49,5 @@ export class LoginComponent {
         this.error = err.error?.detail || "Invalid username or password. Please try again.";
       }
     });
-  }
-
-  fillDefaults() {
-    this.username = "srevarun";
-    this.password = "abcd1234";
-    this.error = "";
   }
 }
