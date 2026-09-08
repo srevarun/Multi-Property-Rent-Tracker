@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EditHistory } from '../../models';
@@ -6,6 +6,7 @@ import { EditHistory } from '../../models';
 @Component({
   selector: 'app-history-view',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [CommonModule, FormsModule],
   templateUrl: './history.component.html'
 })

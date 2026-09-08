@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Tenant, Tenancy, Property, PropertyGroup, RentRate, DepositRefund } from '../../models';
@@ -6,6 +6,7 @@ import { Tenant, Tenancy, Property, PropertyGroup, RentRate, DepositRefund } fro
 @Component({
   selector: 'app-tenants-view',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [CommonModule, FormsModule],
   templateUrl: './tenants.component.html'
 })

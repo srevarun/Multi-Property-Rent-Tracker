@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { ApiService } from './api.service';
@@ -22,6 +22,7 @@ type View = 'tenants' | 'history' | 'dashboard' | 'properties' | 'payments' | 'g
 @Component({
   selector: 'app-root',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [
     CommonModule,
     FormsModule,

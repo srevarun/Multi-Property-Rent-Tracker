@@ -1,3 +1,18 @@
+@import './app/app.component.css';
+
+app-dashboard-view,
+app-properties-view,
+app-payments-view,
+app-expenses-view,
+app-groups-view,
+app-electricity-view,
+app-history-view,
+app-tenants-view,
+app-archive {
+  display: block;
+  width: 100%;
+}
+
 :root {
   color-scheme: light;
   font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

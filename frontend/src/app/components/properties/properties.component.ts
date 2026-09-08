@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Property, PropertyGroup } from '../../models';
@@ -6,6 +6,7 @@ import { Property, PropertyGroup } from '../../models';
 @Component({
   selector: 'app-properties-view',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [CommonModule, FormsModule],
   templateUrl: './properties.component.html'
 })
