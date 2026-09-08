@@ -1,0 +1,110 @@
+<section class="page">
+  <div class="toolbar">
+    <div>
+      <h2>Your portfolio</h2>
+      <p>{{ filteredProperties.length }} properties across {{ groups.length }} groups</p>
+    </div>
+    <div class="toolbar-actions">
+      <div class="view-mode-toggle">
+        <button [class.active]="propertyViewMode === 'grid'" (click)="propertyViewMode = 'grid'" title="Grid Cards View">⊞ Cards</button>
+        <button [class.active]="propertyViewMode === 'table'" (click)="propertyViewMode = 'table'" title="Compact Table View">☰ Table</button>
+      </div>
+      <button class="btn secondary" (click)="openGroupRequested.emit()">＋ Group</button>
+      <button class="btn primary" (click)="openPropertyRequested.emit()">＋ Add property</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <label class="search">⌕<input [(ngModel)]="search" placeholder="Search property, tenant, shop or address"></label>
+    <select aria-label="Property group" [(ngModel)]="groupFilter">
+      <option value="">All groups</option>
+      <option value="ungrouped">Ungrouped</option>
+      <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
+    </select>
+    <button *ngIf="groupFilter || search" class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" (click)="groupFilter=''; search=''">Reset</button>
+  </div>
+
+  <!-- Grid Cards View -->
+  <div class="property-grid" *ngIf="propertyViewMode === 'grid'">
+    <article class="property-card" *ngFor="let p of filteredProperties">
+      <div class="property-top">
+        <div class="building">{{ propertyTypeIcon(p.property_type) }}</div>
+        <span [class.inactive]="!p.active">{{ p.active ? 'Active' : 'Inactive' }}</span>
+      </div>
+      <h3>{{ p.name }} <small style="font-size: 0.75rem; font-weight: 600; color: #4b5563; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">{{ p.property_type || 'House' }}</small></h3>
+      <p class="location">{{ p.group_name || 'Ungrouped' }} · EB: {{ p.electricity_payer === 'Owner' ? 'Owner pays and collects' : 'Tenant pays directly' }}</p>
+      <div class="tenant">
+        <small>TENANT</small>
+        <b *ngIf="p.business_name && p.property_type === 'Shop'">
+          <span style="color: #2563eb; font-weight: 700;">🏪 {{ p.business_name }}</span><br>
+          <span style="font-size: 0.85em; font-weight: 500; color: #475569;">({{ p.tenant_name || 'Vacant property' }})</span>
+        </b>
+        <b *ngIf="!p.business_name || p.property_type !== 'Shop'">{{ p.tenant_name || 'Vacant property' }}</b>
+        <span>{{ p.tenant_phone || 'No phone number' }}</span>
+      </div>
+      <div class="money-row">
+        <div><small>MONTHLY RENT</small><b>{{ currency(p.monthly_rent) }}</b></div>
+        <div><small>ADVANCE</small><b>{{ currency(p.advance_paid) }}</b></div>
+      </div>
+      <div *ngIf="propertyTotalExpenses(p.id) > 0" style="margin-top: 10px; font-size: 0.8rem; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; padding: 5px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+        🛠 <b>Expenses logged:</b> {{ currency(propertyTotalExpenses(p.id)) }}
+      </div>
+      <footer>
+        <button (click)="openPropertyRequested.emit(p)">Edit details</button>
+        <button class="pay" (click)="openPaymentRequested.emit(p)">Record rent</button>
+        <button *ngIf="p.has_tenancy_history" (click)="openPropertyTransferRequested.emit(p)" title="Transfer tenancy to another tenant">⇄ Transfer</button>
+        <button (click)="openExpenseRequested.emit(p.id)">＋ Expense</button>
+        <button class="delete-group" (click)="removePropertyRequested.emit(p)" [attr.aria-label]="'Delete property ' + p.name">Delete</button>
+      </footer>
+    </article>
+  </div>
+
+  <!-- Compact Table View -->
+  <article class="card table-card" *ngIf="propertyViewMode === 'table' && filteredProperties.length">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Group</th>
+            <th>Tenant / Business</th>
+            <th>Monthly Rent</th>
+            <th>Advance Held</th>
+            <th>EB Setup</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of filteredProperties">
+            <td><b>{{ p.name }}</b><small>{{ p.address || '—' }}</small></td>
+            <td><span class="pill" style="background: var(--ink-100); color: var(--ink-700);">{{ p.property_type || 'House' }}</span></td>
+            <td>{{ p.group_name || 'Ungrouped' }}</td>
+            <td>
+              <span *ngIf="p.business_name && p.property_type === 'Shop'"><b>{{ p.business_name }}</b> <small>({{ p.tenant_name || 'Vacant' }})</small></span>
+              <span *ngIf="!p.business_name || p.property_type !== 'Shop'">{{ p.tenant_name || 'Vacant' }}</span>
+              <small *ngIf="p.tenant_phone">{{ p.tenant_phone }}</small>
+            </td>
+            <td class="amount">{{ currency(p.monthly_rent) }}</td>
+            <td>{{ currency(p.advance_paid) }}</td>
+            <td><small>{{ p.electricity_payer === 'Owner' ? 'Owner pays' : 'Tenant pays' }}</small></td>
+            <td><span class="pill" [style.background]="p.active ? '#ecfdf5' : '#f1f5f9'" [style.color]="p.active ? '#059669' : '#64748b'">{{ p.active ? 'Active' : 'Inactive' }}</span></td>
+            <td>
+              <button class="text-btn" (click)="openPropertyRequested.emit(p)">Edit</button>
+              <button class="text-btn" style="margin-left: 4px;" (click)="openPaymentRequested.emit(p)">Rent</button>
+              <button *ngIf="p.has_tenancy_history" class="text-btn" style="margin-left: 4px; background: #eff6ff; color: #1d4ed8;" (click)="openPropertyTransferRequested.emit(p)">Transfer</button>
+              <button class="text-btn" style="margin-left: 4px; background: #fffbeb; color: #b45309;" (click)="openExpenseRequested.emit(p.id)">Expense</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <div class="empty card" *ngIf="!filteredProperties.length">
+    <div>🏠</div>
+    <h3>No properties found</h3>
+    <p>Add your first property or change the current filters.</p>
+  </div>
+</section>

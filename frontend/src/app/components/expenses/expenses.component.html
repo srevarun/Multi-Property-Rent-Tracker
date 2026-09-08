@@ -1,0 +1,96 @@
+<section class="page">
+  <div class="toolbar">
+    <div>
+      <h2>Property expenses & renovations</h2>
+      <p>Track repairs, renovations, painting, maintenance, and capital improvements per property.</p>
+    </div>
+    <button class="btn primary" [disabled]="!properties.length" (click)="openExpenseRequested.emit({})">＋ Record expense</button>
+  </div>
+
+  <div class="filters" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+    <label class="search" style="flex: 1; min-width: 180px;">⌕<input [(ngModel)]="expenseSearch" placeholder="Search contractor, reference, notes..."></label>
+    <select aria-label="Filter expense by property" [(ngModel)]="expensePropertyFilter">
+      <option value="">All properties</option>
+      <option *ngFor="let p of properties" [value]="p.id">{{ p.name }}</option>
+    </select>
+    <select aria-label="Filter expense by group" [(ngModel)]="expenseGroupFilter">
+      <option value="">All groups</option>
+      <option value="ungrouped">Ungrouped</option>
+      <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
+    </select>
+    <select aria-label="Filter expense by category" [(ngModel)]="expenseCategoryFilter">
+      <option value="">All categories</option>
+      <option value="Repair">Repair</option>
+      <option value="Renovation">Renovation</option>
+      <option value="Maintenance">Maintenance</option>
+      <option value="Painting">Painting</option>
+      <option value="Plumbing">Plumbing</option>
+      <option value="Electrical">Electrical</option>
+      <option value="Cleaning">Cleaning</option>
+      <option value="Carpentry">Carpentry</option>
+      <option value="Other">Other</option>
+    </select>
+    <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #475569;">
+      From: <input type="date" [(ngModel)]="expenseFromDate" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+    </label>
+    <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #475569;">
+      To: <input type="date" [(ngModel)]="expenseToDate" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+    </label>
+    <button *ngIf="expensePropertyFilter || expenseGroupFilter || expenseCategoryFilter || expenseFromDate || expenseToDate || expenseSearch" class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" (click)="expensePropertyFilter=''; expenseGroupFilter=''; expenseCategoryFilter=''; expenseFromDate=''; expenseToDate=''; expenseSearch=''">Reset</button>
+  </div>
+
+  <div class="money-row section-gap" style="padding: 12px 16px; background: #fffbeb; border-radius: 8px; border: 1px solid #fde68a; margin-bottom: 16px;">
+    <div><small style="color: #92400e;">TOTAL EXPENSES (FILTERED)</small><b style="color: #b45309; font-size: 1.25rem;">{{ currency(filteredExpensesTotal) }}</b></div>
+    <div><small style="color: #92400e;">EXPENSE RECORDS</small><b style="color: #b45309; font-size: 1.25rem;">{{ filteredExpenses.length }} bills</b></div>
+    <div *ngFor="let cat of expensesCategoryBreakdown.slice(0, 3)">
+      <small style="color: #92400e;">{{ cat.category | uppercase }}</small>
+      <b style="color: #d97706;">{{ currency(cat.total) }} <span style="font-size: 0.75rem; font-weight: 500;">({{ cat.count }})</span></b>
+    </div>
+  </div>
+
+  <article class="card table-card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Property</th>
+            <th>Category</th>
+            <th>Paid to / Contractor</th>
+            <th>Payment method</th>
+            <th>Amount</th>
+            <th>Reference / Notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of filteredExpenses">
+            <td>{{ e.expense_date | date:'dd MMM yyyy' }}</td>
+            <td>
+              <b>{{ e.property_name }}</b>
+              <small>{{ e.group_name || 'Ungrouped' }} · {{ e.property_type || 'House' }}</small>
+            </td>
+            <td>
+              <span class="pill" [style.background]="e.category === 'Renovation' ? '#ede9fe' : e.category === 'Repair' ? '#ffedd5' : e.category === 'Painting' ? '#ccfbf1' : '#e2e8f0'" [style.color]="e.category === 'Renovation' ? '#6b21a8' : e.category === 'Repair' ? '#c2410c' : e.category === 'Painting' ? '#0f766e' : '#334155'">
+                {{ e.category }}
+              </span>
+            </td>
+            <td>{{ e.paid_to || '—' }}</td>
+            <td><span class="method">{{ e.payment_method }}</span></td>
+            <td class="amount" style="color: #b45309; font-weight: 700;">{{ currency(e.amount) }}</td>
+            <td>
+              <span *ngIf="e.reference"><b>Ref:</b> {{ e.reference }}<br></span>
+              <small>{{ e.notes }}</small>
+              <span *ngIf="!e.reference && !e.notes">—</span>
+            </td>
+            <td>
+              <button class="text-btn" (click)="openExpenseRequested.emit({ propertyId: e.property_id, expense: e })">Edit</button>
+              <button class="icon-btn danger" (click)="removeExpenseRequested.emit(e)" title="Delete expense">×</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" *ngIf="!filteredExpenses.length"><div>🛠</div><h3>No expenses found</h3><p>No property expenses recorded matching these filters.</p></div>
+  </article>
+</section>

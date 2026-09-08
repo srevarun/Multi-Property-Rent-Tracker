@@ -1,0 +1,99 @@
+<section class="page">
+  <div class="toolbar">
+    <div>
+      <h2>Property groups</h2>
+      <p>Organise units into apartments, shopping complexes or your own group types.</p>
+    </div>
+    <button class="btn primary" (click)="openGroupRequested.emit()">＋ Add group</button>
+  </div>
+
+  <div class="property-grid">
+    <article class="property-card" *ngFor="let g of groups">
+      <h3>{{ g.name }}</h3>
+      <p class="location">{{ g.kind }} · {{ g.property_count }} properties</p>
+      <div class="tenant">
+        <small>TAXES PAID · ALL TIME</small>
+        <b>Property tax: {{ currency(g.property_tax) }}</b>
+        <b>Water tax: {{ currency(g.water_tax) }}</b>
+      </div>
+      <footer>
+        <button (click)="filterPropertiesByGroupRequested.emit(g.id)">View properties</button>
+        <button class="pay" (click)="openTaxRequested.emit(g.id)">Record tax</button>
+        <button (click)="openGroupRequested.emit(g)">Edit</button>
+        <button class="delete-group" (click)="removeGroupRequested.emit(g)" [attr.aria-label]="'Delete group ' + g.name">Delete</button>
+      </footer>
+    </article>
+  </div>
+
+  <div *ngIf="!groups.length" class="empty card">
+    <h3>No groups yet</h3>
+    <p>Add an apartment or complex, then assign properties using Edit details.</p>
+  </div>
+
+  <div class="toolbar section-gap">
+    <div>
+      <h2>Tax payment history</h2>
+      <p>Property and water taxes paid for each group.</p>
+    </div>
+    <button class="btn primary" [disabled]="!groups.length" (click)="openTaxRequested.emit()">＋ Record tax</button>
+  </div>
+
+  <div class="filters" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+    <select aria-label="Tax group" [(ngModel)]="taxGroupFilter">
+      <option value="">All groups</option>
+      <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
+    </select>
+    <select aria-label="Tax type" [(ngModel)]="taxTypeFilter">
+      <option value="">All tax types</option>
+      <option value="Property tax">Property tax</option>
+      <option value="Water tax">Water tax</option>
+    </select>
+    <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #475569;">
+      From: <input type="date" [(ngModel)]="taxFromDate" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+    </label>
+    <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #475569;">
+      To: <input type="date" [(ngModel)]="taxToDate" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+    </label>
+    <button *ngIf="taxGroupFilter || taxTypeFilter || taxFromDate || taxToDate" class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" (click)="taxGroupFilter=''; taxTypeFilter=''; taxFromDate=''; taxToDate=''">Reset</button>
+  </div>
+
+  <div class="money-row section-gap" style="padding: 12px 16px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 16px;">
+    <div><small style="color: #1e40af;">TAXES PAID IN PERIOD</small><b style="color: #1d4ed8; font-size: 1.25rem;">{{ currency(visibleTaxesTotal) }}</b></div>
+    <div><small style="color: #1e40af;">PROPERTY TAX</small><b style="color: #2563eb;">{{ currency(visiblePropertyTaxTotal) }}</b></div>
+    <div><small style="color: #1e40af;">WATER TAX</small><b style="color: #2563eb;">{{ currency(visibleWaterTaxTotal) }}</b></div>
+    <div><small style="color: #1e40af;">PAYMENT RECORDS</small><b style="color: #1d4ed8;">{{ visibleTaxes.length }}</b></div>
+  </div>
+
+  <article class="card table-card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Tax</th>
+            <th>Period</th>
+            <th>Paid on</th>
+            <th>Amount</th>
+            <th>Reference / notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of visibleTaxes">
+            <td>{{ t.group_name }}</td>
+            <td>{{ t.tax_type }}</td>
+            <td>{{ t.period || '—' }}</td>
+            <td>{{ t.paid_on | date:'dd MMM yyyy' }}</td>
+            <td>{{ currency(t.amount) }}</td>
+            <td>{{ t.reference || '—' }}<small>{{ t.notes }}</small></td>
+            <td>
+              <button class="text-btn" (click)="editTaxRequested.emit(t)">Edit</button>
+              <button class="icon-btn danger" aria-label="Delete tax payment" (click)="removeTaxRequested.emit(t.id)">×</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" *ngIf="!visibleTaxes.length">No tax payments match the selected filters.</div>
+  </article>
+</section>

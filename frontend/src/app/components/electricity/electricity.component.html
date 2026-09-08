@@ -1,0 +1,48 @@
+<section class="page">
+  <div class="toolbar">
+    <div>
+      <h2>Owner-paid electricity</h2>
+      <p>Record EB bills you paid and track reimbursement from tenants.</p>
+    </div>
+    <button class="btn primary" [disabled]="!ownerProperties.length" (click)="openElectricityRequested.emit()">＋ Record EB bill</button>
+  </div>
+  <article class="card collection">
+    <h2>Pending from tenants: {{ currency(electricityPending) }}</h2>
+    <p class="location">Separate from rent. Set “Owner pays and collects” in a property's details to record its bills.</p>
+  </article>
+  <article class="card table-card section-gap">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Bill period</th>
+            <th>Owner paid on</th>
+            <th>Bill</th>
+            <th>Collected</th>
+            <th>Pending</th>
+            <th>Reference / notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of electricity">
+            <td>{{ b.property_name }}<small>{{ b.group_name || 'Ungrouped' }}</small></td>
+            <td>{{ b.period }}</td>
+            <td>{{ b.paid_on | date:'dd MMM yyyy' }}</td>
+            <td>{{ currency(b.amount) }}</td>
+            <td>{{ currency(b.collected) }}</td>
+            <td class="balance">{{ currency(b.amount - b.collected) }}</td>
+            <td>{{ b.reference || '—' }}<small>{{ b.notes }}</small></td>
+            <td>
+              <button class="text-btn" (click)="editElectricityRequested.emit(b)">Edit bill</button>
+              <button class="text-btn" (click)="openCollectionRequested.emit(b)">Update collected</button>
+              <button class="icon-btn danger" aria-label="Delete electricity bill" (click)="removeElectricityRequested.emit(b.id)">×</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" *ngIf="!electricity.length">No owner-paid electricity bills recorded.</div>
+  </article>
+</section>

@@ -40,993 +40,714 @@
     <div *ngIf="loading" class="state"><div class="spinner"></div>Loading your rent ledger…</div>
     <div *ngIf="error" class="error">{{ error }} <button (click)="error = ''">×</button></div>
 
-    <section *ngIf="!loading && view === 'dashboard' && dashboard" class="page">
-      <div class="toolbar">
-        <div>
-          <h2>Portfolio snapshot</h2>
-          <p>Tracking rent collection for <b>{{ dashboardStayMonth | date:'MMMM yyyy' }} stay</b> (collected during {{ selectedMonth | date:'MMMM yyyy' }}).</p>
-        </div>
-        <label class="month">
-          Collection month
-          <input type="month" [(ngModel)]="selectedMonth" (change)="changeMonth()">
-          <small style="display: block; font-size: 0.72rem; color: #64748b; margin-top: 2px;">
-            ⚡ Collecting for {{ dashboardStayMonth | date:'MMM yyyy' }} stay (Postpaid)
-          </small>
-        </label>
-      </div>
+    <!-- Modular Views -->
+    <app-dashboard-view *ngIf="!loading && view === 'dashboard' && dashboard"
+      [dashboard]="dashboard"
+      [selectedMonth]="selectedMonth"
+      [dashboardStayMonth]="dashboardStayMonth"
+      [groups]="groups"
+      (monthChange)="selectedMonth = $event; changeMonth()"
+      (openPropertyRequested)="openProperty()"
+      (openGroupRequested)="openGroup()"
+      (openPaymentRequested)="openPayment($event)">
+    </app-dashboard-view>
 
-      <p class="notice" *ngIf="dashboard.legacy_properties || dashboard.unassigned_payments">{{ dashboard.legacy_properties }} properties still use legacy rent details. {{ dashboard.unassigned_payments }} payments this month have no tenancy assigned. Add tenancy history and edit old payments to link them before relying on historical balances.</p>
-      <article class="notice" *ngIf="dashboard.unknown_properties.length"><b>Historical totals are incomplete</b><p *ngFor="let p of dashboard.unknown_properties">{{ p.name }}: {{ p.reason }}.</p><p>These properties are excluded from expected rent and balances until the missing details are entered.</p></article>
-      
-      <div class="stats">
-        <article><div class="stat-icon green">₹</div><p>Collected for {{ dashboardStayMonth | date:'MMM yyyy' }} stay</p><h3>{{ currency(dashboard.collected_rent) }}</h3><small><b>{{ dashboard.collection_rate }}%</b> of expected rent</small></article>
-        <article><div class="stat-icon amber">◷</div><p>Pending rent</p><h3>{{ currency(dashboard.pending_rent) }}</h3><small>{{ dashboard.pending_properties.length }} properties pending</small></article>
-        <article><div class="stat-icon blue">⌂</div><p>Properties charged</p><h3>{{ dashboard.total_properties }}</h3><small>{{ currency(dashboard.expected_rent) }} expected for {{ dashboardStayMonth | date:'MMM' }}</small></article>
-        <article><div class="stat-icon purple">◇</div><p>Advances held</p><h3>{{ currency(dashboard.total_advances) }}</h3><small>Total tenant deposits</small></article>
-      </div>
+    <app-properties-view *ngIf="!loading && view === 'properties'"
+      [properties]="properties"
+      [groups]="groups"
+      [expensesTotalByProperty]="expensesTotalByProperty"
+      (openPropertyRequested)="openProperty($event)"
+      (openPaymentRequested)="openPayment($event)"
+      (openPropertyTransferRequested)="openPropertyTransfer($event)"
+      (openExpenseRequested)="openExpense($event)"
+      (openGroupRequested)="openGroup()"
+      (removePropertyRequested)="removeProperty($event)">
+    </app-properties-view>
 
-      <!-- Group Performance Breakdown -->
-      <div *ngIf="groupSummaryStats.length" style="margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <div>
-            <h3 style="font-size: 15px; font-weight: 700; color: var(--ink-900); margin: 0;">Group performance breakdown</h3>
-            <p style="font-size: 12px; color: var(--ink-500); margin: 2px 0 0 0;">Rent collection status across your apartments and complexes for {{ dashboardStayMonth | date:'MMM yyyy' }} stay ({{ selectedMonth | date:'MMM yyyy' }} collections)</p>
-          </div>
-          <button *ngIf="dashboardGroupFilter" class="btn secondary" style="font-size: 11.5px; padding: 4px 10px;" (click)="dashboardGroupFilter = ''">
-            ✕ Clear group filter
-          </button>
-        </div>
-        <div class="group-summary-grid">
-          <div *ngFor="let g of groupSummaryStats" 
-               class="group-summary-card" 
-               [class.selected]="dashboardGroupFilter === '' + g.id"
-               (click)="setDashboardGroup('' + g.id)">
-            <div class="group-summary-header">
-              <div>
-                <div class="group-summary-title">
-                  <span>🏢</span> {{ g.name }}
-                  <span class="pill" style="font-size: 10px; padding: 2px 7px; background: var(--ink-100); color: var(--ink-700);">{{ g.kind || 'Group' }}</span>
-                </div>
-                <small style="color: var(--ink-500); font-size: 11px;">{{ g.totalUnits }} total units</small>
-              </div>
-              <span class="pill" [style.background]="g.rate >= 100 ? '#ecfdf5' : g.rate > 0 ? '#eff6ff' : '#fffbeb'" [style.color]="g.rate >= 100 ? '#059669' : g.rate > 0 ? '#2563eb' : '#d97706'">
-                {{ g.rate }}% collected
-              </span>
-            </div>
-            
-            <div class="group-summary-stats">
-              <div class="group-stat-col">
-                <small>Expected</small>
-                <b>{{ currency(g.expected) }}</b>
-              </div>
-              <div class="group-stat-col">
-                <small style="color: #059669;">Collected</small>
-                <b style="color: #059669;">{{ currency(g.collected) }}</b>
-              </div>
-              <div class="group-stat-col">
-                <small style="color: #d97706;">Pending</small>
-                <b style="color: #d97706;">{{ currency(g.pending) }}</b>
-              </div>
-            </div>
+    <app-payments-view *ngIf="!loading && view === 'payments'"
+      [payments]="payments"
+      [properties]="properties"
+      [tenants]="tenants"
+      (openPaymentRequested)="openPayment()"
+      (editPaymentRequested)="editPayment($event)"
+      (removePaymentRequested)="removePayment($event)">
+    </app-payments-view>
 
-            <div class="group-progress-bar">
-              <span [style.width.%]="g.rate"></span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: var(--ink-500);">
-              <span>{{ g.pendingCount ? g.pendingCount + ' unit(s) pending' : 'All units paid' }}</span>
-              <span style="font-weight: 600; color: var(--primary);">{{ dashboardGroupFilter === '' + g.id ? 'Filtered ✓' : 'Click to filter ›' }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <app-expenses-view *ngIf="!loading && view === 'expenses'"
+      [expenses]="expenses"
+      [properties]="properties"
+      [groups]="groups"
+      (openExpenseRequested)="openExpense($event.propertyId, $event.expense)"
+      (removeExpenseRequested)="removeExpenseRecord($event)">
+    </app-expenses-view>
 
-      <div class="grid">
-        <article class="card collection">
-          <div class="card-head"><div><h2>Collection progress</h2><p>{{ dashboardStayMonth | date:'MMMM yyyy' }} stay (Collected in {{ selectedMonth | date:'MMMM yyyy' }})</p></div><span class="rate">{{ dashboard.collection_rate }}%</span></div>
-          <div class="progress"><span [style.width.%]="dashboard.collection_rate"></span></div>
-          <div class="progress-labels"><span><i class="dot paid"></i>Collected <b>{{ currency(dashboard.collected_rent) }}</b></span><span><i class="dot pending"></i>Pending <b>{{ currency(dashboard.pending_rent) }}</b></span></div>
-        </article>
-        <article class="card quick"><h2>Quick actions</h2><button (click)="openProperty()"><span>＋</span><div><b>Add a property</b><small>Register a new rental unit</small></div>›</button><button (click)="openGroup()"><span>⌖</span><div><b>Add a group</b><small>Group houses or shops together</small></div>›</button></article>
-      </div>
+    <app-groups-view *ngIf="!loading && view === 'groups'"
+      [groups]="groups"
+      [taxes]="taxes"
+      (openGroupRequested)="openGroup($event)"
+      (openTaxRequested)="openTax($event)"
+      (editTaxRequested)="editTax($event)"
+      (removeTaxRequested)="removeExpense('taxes', $event)"
+      (removeGroupRequested)="removeGroup($event)"
+      (filterPropertiesByGroupRequested)="onFilterPropertiesByGroup($event)">
+    </app-groups-view>
 
-      <article class="card table-card">
-        <div class="card-head">
-          <div>
-            <h2>Rent due for {{ dashboardStayMonth | date:'MMMM yyyy' }} stay</h2>
-            <p>Properties with a balance for {{ dashboardStayMonth | date:'MMMM yyyy' }} stay (collected in {{ selectedMonth | date:'MMMM yyyy' }})</p>
-          </div>
-          <span class="pill">{{ filteredDashboardPending.length }} pending</span>
-        </div>
+    <app-electricity-view *ngIf="!loading && view === 'electricity'"
+      [electricity]="electricity"
+      [ownerProperties]="ownerProperties"
+      [electricityPending]="electricityPending"
+      (openElectricityRequested)="openElectricity()"
+      (editElectricityRequested)="editElectricity($event)"
+      (openCollectionRequested)="openCollection($event)"
+      (removeElectricityRequested)="removeExpense('electricity', $event)">
+    </app-electricity-view>
 
-        <div style="padding: 10px 18px; background: #fafbfb; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-          <div class="filter-chips" style="margin-bottom: 0;">
-            <button class="filter-chip" [class.active]="!dashboardGroupFilter" (click)="dashboardGroupFilter = ''">
-              All ({{ dashboard.pending_properties.length }})
-            </button>
-            <button *ngFor="let g of groups" class="filter-chip" [class.active]="dashboardGroupFilter === '' + g.id" (click)="setDashboardGroup('' + g.id)">
-              {{ g.name }}
-            </button>
-          </div>
-          <div class="search" style="min-width: 220px; padding: 4px 10px; background: #ffffff;">
-            ⌕ <input [(ngModel)]="dashboardSearch" placeholder="Search unit or tenant..." style="font-size: 12px;">
-          </div>
-        </div>
+    <app-history-view *ngIf="!loading && view === 'history'"
+      [history]="history">
+    </app-history-view>
 
-        <div class="empty" *ngIf="!filteredDashboardPending.length && !dashboard.unknown_properties.length">
-          <div>✓</div>
-          <h3>All caught up!</h3>
-          <p *ngIf="!dashboard.pending_properties.length">Every property with known rent for {{ dashboardStayMonth | date:'MMMM yyyy' }} stay is fully paid.</p>
-          <p *ngIf="dashboard.pending_properties.length">No pending properties match the current group or search filter.</p>
-        </div>
+    <app-tenants-view *ngIf="!loading && view === 'tenants'"
+      [tenants]="tenants"
+      [tenancies]="tenancies"
+      [properties]="properties"
+      [groups]="groups"
+      [rates]="rates"
+      [paymentsTotalByTenant]="paymentsTotalByTenant"
+      (openTenantRequested)="openTenant($event)"
+      (openTenancyRequested)="openTenancy($event)"
+      (openTransferRequested)="openTransfer($event)"
+      (openRateRequested)="openRate($event.tenancy, $event.rate)"
+      (openRefundRequested)="openRefund($event.tenancy, $event.refund)"
+      (removeRefundRequested)="removeRefund($event)">
+    </app-tenants-view>
 
-        <div class="table-wrap" *ngIf="filteredDashboardPending.length">
-          <table>
-            <thead>
-              <tr>
-                <th>Property</th>
-                <th>Tenant</th>
-                <th>Stay Period & Due Date</th>
-                <th>Monthly Rent</th>
-                <th>Balance Due</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let p of filteredDashboardPending">
-                <td><b>{{ p.name }}</b><small>{{ p.group_name || 'Ungrouped' }} · {{ p.property_type || 'House' }}</small></td>
-                <td><span *ngIf="p.business_name && p.property_type === 'Shop'"><b>{{ p.business_name }}</b> <small>({{ p.tenant_name || 'Vacant' }})</small></span><span *ngIf="!p.business_name || p.property_type !== 'Shop'">{{ p.tenant_name || 'Vacant' }}</span></td>
-                <td>
-                  <b>{{ dashboardStayMonth | date:'MMM yyyy' }} stay</b>
-                  <br><small style="color: #64748b;">Due by {{ p.due_day }}th {{ selectedMonth | date:'MMM' }}</small>
-                </td>
-                <td>{{ currency(p.monthly_rent) }}</td>
-                <td class="balance">{{ currency(p.monthly_rent - p.amount_paid) }}</td>
-                <td><button class="text-btn" (click)="openPayment(p)">Record payment</button></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </article>
-    </section>
-
-    <section *ngIf="!loading && view === 'properties'" class="page">
-      <div class="toolbar">
-        <div>
-          <h2>Your portfolio</h2>
-          <p>{{ filteredProperties.length }} properties across {{ groups.length }} groups</p>
-        </div>
-        <div class="toolbar-actions">
-          <div class="view-mode-toggle">
-            <button [class.active]="propertyViewMode === 'grid'" (click)="propertyViewMode = 'grid'" title="Grid Cards View">⊞ Cards</button>
-            <button [class.active]="propertyViewMode === 'table'" (click)="propertyViewMode = 'table'" title="Compact Table View">☰ Table</button>
-          </div>
-          <button class="btn secondary" (click)="openGroup()">＋ Group</button>
-          <button class="btn primary" (click)="openProperty()">＋ Add property</button>
-        </div>
-      </div>
-
-      <div class="filters">
-        <label class="search">⌕<input [(ngModel)]="search" placeholder="Search property, tenant, shop or address"></label>
-        <select aria-label="Property group" [(ngModel)]="groupFilter">
-          <option value="">All groups</option>
-          <option value="ungrouped">Ungrouped</option>
-          <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
-        </select>
-        <button *ngIf="groupFilter || search" class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" (click)="groupFilter=''; search=''">Reset</button>
-      </div>
-
-      <!-- Grid Cards View -->
-      <div class="property-grid" *ngIf="propertyViewMode === 'grid'">
-        <article class="property-card" *ngFor="let p of filteredProperties">
-          <div class="property-top">
-            <div class="building">{{ propertyTypeIcon(p.property_type) }}</div>
-            <span [class.inactive]="!p.active">{{ p.active ? 'Active' : 'Inactive' }}</span>
-          </div>
-          <h3>{{ p.name }} <small style="font-size: 0.75rem; font-weight: 600; color: #4b5563; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">{{ p.property_type || 'House' }}</small></h3>
-          <p class="location">{{ p.group_name || 'Ungrouped' }} · EB: {{ p.electricity_payer === 'Owner' ? 'Owner pays and collects' : 'Tenant pays directly' }}</p>
-          <div class="tenant">
-            <small>TENANT</small>
-            <b *ngIf="p.business_name && p.property_type === 'Shop'">
-              <span style="color: #2563eb; font-weight: 700;">🏪 {{ p.business_name }}</span><br>
-              <span style="font-size: 0.85em; font-weight: 500; color: #475569;">({{ p.tenant_name || 'Vacant property' }})</span>
-            </b>
-            <b *ngIf="!p.business_name || p.property_type !== 'Shop'">{{ p.tenant_name || 'Vacant property' }}</b>
-            <span>{{ p.tenant_phone || 'No phone number' }}</span>
-          </div>
-          <div class="money-row">
-            <div><small>MONTHLY RENT</small><b>{{ currency(p.monthly_rent) }}</b></div>
-            <div><small>ADVANCE</small><b>{{ currency(p.advance_paid) }}</b></div>
-          </div>
-          <div *ngIf="propertyTotalExpenses(p.id) > 0" style="margin-top: 10px; font-size: 0.8rem; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; padding: 5px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-            🛠 <b>Expenses logged:</b> {{ currency(propertyTotalExpenses(p.id)) }}
-          </div>
-          <footer>
-            <button (click)="openProperty(p)">Edit details</button>
-            <button class="pay" (click)="openPayment(p)">Record rent</button>
-            <button *ngIf="p.has_tenancy_history" (click)="openPropertyTransfer(p)" title="Transfer tenancy to another tenant">⇄ Transfer</button>
-            <button (click)="openExpense(p.id)">＋ Expense</button>
-            <button class="delete-group" (click)="removeProperty(p)" [attr.aria-label]="'Delete property ' + p.name">Delete</button>
-          </footer>
-        </article>
-      </div>
-
-      <!-- Compact Table View -->
-      <article class="card table-card" *ngIf="propertyViewMode === 'table' && filteredProperties.length">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Property</th>
-                <th>Type</th>
-                <th>Group</th>
-                <th>Tenant / Business</th>
-                <th>Monthly Rent</th>
-                <th>Advance Held</th>
-                <th>EB Setup</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let p of filteredProperties">
-                <td><b>{{ p.name }}</b><small>{{ p.address || '—' }}</small></td>
-                <td><span class="pill" style="background: var(--ink-100); color: var(--ink-700);">{{ p.property_type || 'House' }}</span></td>
-                <td>{{ p.group_name || 'Ungrouped' }}</td>
-                <td>
-                  <span *ngIf="p.business_name && p.property_type === 'Shop'"><b>{{ p.business_name }}</b> <small>({{ p.tenant_name || 'Vacant' }})</small></span>
-                  <span *ngIf="!p.business_name || p.property_type !== 'Shop'">{{ p.tenant_name || 'Vacant' }}</span>
-                  <small *ngIf="p.tenant_phone">{{ p.tenant_phone }}</small>
-                </td>
-                <td class="amount">{{ currency(p.monthly_rent) }}</td>
-                <td>{{ currency(p.advance_paid) }}</td>
-                <td><small>{{ p.electricity_payer === 'Owner' ? 'Owner pays' : 'Tenant pays' }}</small></td>
-                <td><span class="pill" [style.background]="p.active ? '#ecfdf5' : '#f1f5f9'" [style.color]="p.active ? '#059669' : '#64748b'">{{ p.active ? 'Active' : 'Inactive' }}</span></td>
-                <td>
-                  <button class="text-btn" (click)="openProperty(p)">Edit</button>
-                  <button class="text-btn" style="margin-left: 4px;" (click)="openPayment(p)">Rent</button>
-                  <button *ngIf="p.has_tenancy_history" class="text-btn" style="margin-left: 4px; background: #eff6ff; color: #1d4ed8;" (click)="openPropertyTransfer(p)">Transfer</button>
-                  <button class="text-btn" style="margin-left: 4px; background: #fffbeb; color: #b45309;" (click)="openExpense(p.id)">Expense</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </article>
-
-      <div class="empty card" *ngIf="!filteredProperties.length"><div>⌂</div><h3>No properties found</h3><p>Add your first property or change the current filters.</p></div>
-    </section>
-
-    <section *ngIf="!loading && view === 'payments'" class="page">
-      <div class="toolbar"><div><h2>Complete payment history</h2><p>Every rent payment in one searchable ledger, with stay month and collection date.</p></div><button class="btn primary" (click)="openPayment()">＋ Record rent</button></div>
-      <div class="filters" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-        <label class="search" style="flex: 1; min-width: 180px;">⌕<input [(ngModel)]="search" placeholder="Search reference, notes..."></label>
-        <select aria-label="Filter payment by property" [(ngModel)]="paymentPropertyFilter">
-          <option value="">All properties</option>
-          <option *ngFor="let p of properties" [value]="p.id">{{ p.name }}</option>
-        </select>
-        <select aria-label="Filter payment by tenant" [(ngModel)]="paymentTenantFilter">
-          <option value="">All tenants</option>
-          <option *ngFor="let tn of tenants" [value]="tn.name">{{ tn.name }}</option>
-        </select>
-        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #475569;">
-          From stay: <input type="month" [(ngModel)]="paymentFromMonth" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
-        </label>
-        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #475569;">
-          To stay: <input type="month" [(ngModel)]="paymentToMonth" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
-        </label>
-        <button *ngIf="paymentPropertyFilter || paymentTenantFilter || paymentFromMonth || paymentToMonth || search" class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" (click)="paymentPropertyFilter=''; paymentTenantFilter=''; paymentFromMonth=''; paymentToMonth=''; search=''">Reset</button>
-      </div>
-
-      <div class="money-row section-gap" style="padding: 12px 16px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 16px;">
-        <div><small style="color: #166534;">RENT COLLECTED (FILTERED)</small><b style="color: #15803d; font-size: 1.25rem;">{{ currency(filteredPaymentsTotal) }}</b></div>
-        <div><small style="color: #166534;">PAYMENTS COUNT</small><b style="color: #15803d; font-size: 1.25rem;">{{ filteredPayments.length }} receipts</b></div>
-        <div *ngIf="paymentTenantFilter"><small style="color: #166534;">TENANT</small><b style="color: #15803d;">{{ paymentTenantFilter }}</b></div>
-        <div *ngIf="paymentFromMonth || paymentToMonth"><small style="color: #166534;">STAY TIMEFRAME</small><b style="color: #15803d;">{{ (paymentFromMonth || 'Start') }} → {{ (paymentToMonth || 'Latest') }}</b></div>
-      </div>
-
-      <article class="card table-card">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Receipt</th>
-                <th>Property</th>
-                <th>Stay Month (Period)</th>
-                <th>Paid on (Date)</th>
-                <th>Billing Cycle</th>
-                <th>Method</th>
-                <th>Reference</th>
-                <th>Amount</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let p of filteredPayments">
-                <td class="muted">#{{ p.id }}</td>
-                <td>
-                  <b>{{ p.property_name }}</b>
-                  <small>{{ p.group_name || 'Ungrouped' }} · <span *ngIf="p.business_name"><b>{{ p.business_name }}</b> ({{ p.tenant_name }})</span><span *ngIf="!p.business_name">{{ p.tenant_name || 'Unknown tenant' }}</span><span *ngIf="!p.tenancy_id"> · Unassigned legacy payment</span></small>
-                </td>
-                <td>
-                  <b>{{ p.rental_month | date:'MMM yyyy' }}</b>
-                  <br><small style="color: #64748b;">Month of stay</small>
-                </td>
-                <td>
-                  <b>{{ p.paid_on | date:'dd MMM yyyy' }}</b>
-                </td>
-                <td>
-                  <span *ngIf="isPostpaid(p.rental_month, p.paid_on)" class="pill" style="background: #e0f2fe; color: #0369a1; font-size: 0.72rem; font-weight: 600;" title="Postpaid: Paid after the stay month concluded">
-                    Postpaid ({{ p.paid_on | date:'MMM' }} for {{ p.rental_month | date:'MMM' }})
-                  </span>
-                  <span *ngIf="p.paid_on && p.paid_on.slice(0, 7) === p.rental_month" class="pill" style="background: #f1f5f9; color: #475569; font-size: 0.72rem;">
-                    Same month
-                  </span>
-                  <span *ngIf="p.paid_on && p.paid_on.slice(0, 7) < p.rental_month" class="pill" style="background: #fef3c7; color: #92400e; font-size: 0.72rem;">
-                    Advance
-                  </span>
-                </td>
-                <td><span class="method">{{ p.payment_method }}</span></td>
-                <td>{{ p.reference || '—' }}</td>
-                <td class="amount">{{ currency(p.amount) }}</td>
-                <td><button class="text-btn" (click)="editPayment(p)">Edit</button><button class="icon-btn danger" (click)="removePayment(p)" title="Delete">×</button></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="empty" *ngIf="!filteredPayments.length"><div>₹</div><h3>No payments found</h3><p>No payments match the selected property, tenant, or timeframe.</p></div>
-      </article>
-    </section>
-
-    <section *ngIf="!loading && view === 'expenses'" class="page">
-      <div class="toolbar">
-        <div>
-          <h2>Property expenses & renovations</h2>
-          <p>Track repairs, renovations, painting, maintenance, and capital improvements per property.</p>
-        </div>
-        <button class="btn primary" [disabled]="!properties.length" (click)="openExpense()">＋ Record expense</button>
-      </div>
-
-      <div class="filters" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-        <label class="search" style="flex: 1; min-width: 180px;">⌕<input [(ngModel)]="expenseSearch" placeholder="Search contractor, reference, notes..."></label>
-        <select aria-label="Filter expense by property" [(ngModel)]="expensePropertyFilter">
-          <option value="">All properties</option>
-          <option *ngFor="let p of properties" [value]="p.id">{{ p.name }}</option>
-        </select>
-        <select aria-label="Filter expense by group" [(ngModel)]="expenseGroupFilter">
-          <option value="">All groups</option>
-          <option value="ungrouped">Ungrouped</option>
-          <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
-        </select>
-        <select aria-label="Filter expense by category" [(ngModel)]="expenseCategoryFilter">
-          <option value="">All categories</option>
-          <option value="Repair">Repair</option>
-          <option value="Renovation">Renovation</option>
-          <option value="Maintenance">Maintenance</option>
-          <option value="Painting">Painting</option>
-          <option value="Plumbing">Plumbing</option>
-          <option value="Electrical">Electrical</option>
-          <option value="Cleaning">Cleaning</option>
-          <option value="Carpentry">Carpentry</option>
-          <option value="Other">Other</option>
-        </select>
-        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #475569;">
-          From: <input type="date" [(ngModel)]="expenseFromDate" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
-        </label>
-        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #475569;">
-          To: <input type="date" [(ngModel)]="expenseToDate" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
-        </label>
-        <button *ngIf="expensePropertyFilter || expenseGroupFilter || expenseCategoryFilter || expenseFromDate || expenseToDate || expenseSearch" class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" (click)="expensePropertyFilter=''; expenseGroupFilter=''; expenseCategoryFilter=''; expenseFromDate=''; expenseToDate=''; expenseSearch=''">Reset</button>
-      </div>
-
-      <div class="money-row section-gap" style="padding: 12px 16px; background: #fffbeb; border-radius: 8px; border: 1px solid #fde68a; margin-bottom: 16px;">
-        <div><small style="color: #92400e;">TOTAL EXPENSES (FILTERED)</small><b style="color: #b45309; font-size: 1.25rem;">{{ currency(filteredExpensesTotal) }}</b></div>
-        <div><small style="color: #92400e;">EXPENSE RECORDS</small><b style="color: #b45309; font-size: 1.25rem;">{{ filteredExpenses.length }} bills</b></div>
-        <div *ngFor="let cat of expensesCategoryBreakdown.slice(0, 3)">
-          <small style="color: #92400e;">{{ cat.category | uppercase }}</small>
-          <b style="color: #d97706;">{{ currency(cat.total) }} <span style="font-size: 0.75rem; font-weight: 500;">({{ cat.count }})</span></b>
-        </div>
-      </div>
-
-      <article class="card table-card">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Property</th>
-                <th>Category</th>
-                <th>Paid to / Contractor</th>
-                <th>Payment method</th>
-                <th>Amount</th>
-                <th>Reference / Notes</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let e of filteredExpenses">
-                <td>{{ e.expense_date | date:'dd MMM yyyy' }}</td>
-                <td>
-                  <b>{{ e.property_name }}</b>
-                  <small>{{ e.group_name || 'Ungrouped' }} · {{ e.property_type || 'House' }}</small>
-                </td>
-                <td>
-                  <span class="pill" [style.background]="e.category === 'Renovation' ? '#ede9fe' : e.category === 'Repair' ? '#ffedd5' : e.category === 'Painting' ? '#ccfbf1' : '#e2e8f0'" [style.color]="e.category === 'Renovation' ? '#6b21a8' : e.category === 'Repair' ? '#c2410c' : e.category === 'Painting' ? '#0f766e' : '#334155'">
-                    {{ e.category }}
-                  </span>
-                </td>
-                <td>{{ e.paid_to || '—' }}</td>
-                <td><span class="method">{{ e.payment_method }}</span></td>
-                <td class="amount" style="color: #b45309; font-weight: 700;">{{ currency(e.amount) }}</td>
-                <td>
-                  <span *ngIf="e.reference"><b>Ref:</b> {{ e.reference }}<br></span>
-                  <small>{{ e.notes }}</small>
-                  <span *ngIf="!e.reference && !e.notes">—</span>
-                </td>
-                <td>
-                  <button class="text-btn" (click)="openExpense(e.property_id, e)">Edit</button>
-                  <button class="icon-btn danger" (click)="removeExpenseRecord(e)" title="Delete expense">×</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="empty" *ngIf="!filteredExpenses.length">
-          <div>🛠</div>
-          <h3>No expenses found</h3>
-          <p>No expense or renovation records match the current filters.</p>
-        </div>
-      </article>
-    </section>
-    <section *ngIf="!loading && view === 'groups'" class="page">
-      <div class="toolbar"><div><h2>Property groups</h2><p>Organise units into apartments, shopping complexes or your own group types.</p></div><button class="btn primary" (click)="openGroup()">＋ Add group</button></div>
-      <div class="property-grid"><article class="property-card" *ngFor="let g of groups"><h3>{{ g.name }}</h3><p class="location">{{ g.kind }} · {{ g.property_count }} properties</p><div class="tenant"><small>TAXES PAID · ALL TIME</small><b>Property tax: {{ currency(g.property_tax) }}</b><b>Water tax: {{ currency(g.water_tax) }}</b></div><footer><button (click)="groupFilter = '' + g.id; search = ''; setView('properties')">View properties</button><button class="pay" (click)="openTax(g.id)">Record tax</button><button (click)="openGroup(g)">Edit</button><button class="delete-group" (click)="removeGroup(g)" [attr.aria-label]="'Delete group ' + g.name">Delete</button></footer></article></div>
-      <div *ngIf="!groups.length" class="empty card"><h3>No groups yet</h3><p>Add an apartment or complex, then assign properties using Edit details.</p></div>
-      <div class="toolbar section-gap"><div><h2>Tax payment history</h2><p>Property and water taxes paid for each group.</p></div><button class="btn primary" [disabled]="!groups.length" (click)="openTax()">＋ Record tax</button></div>
-      <div class="filters" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-        <select aria-label="Tax group" [(ngModel)]="taxGroupFilter">
-          <option value="">All groups</option>
-          <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
-        </select>
-        <select aria-label="Tax type" [(ngModel)]="taxTypeFilter">
-          <option value="">All tax types</option>
-          <option value="Property tax">Property tax</option>
-          <option value="Water tax">Water tax</option>
-        </select>
-        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #475569;">
-          From: <input type="date" [(ngModel)]="taxFromDate" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
-        </label>
-        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #475569;">
-          To: <input type="date" [(ngModel)]="taxToDate" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
-        </label>
-        <button *ngIf="taxGroupFilter || taxTypeFilter || taxFromDate || taxToDate" class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" (click)="taxGroupFilter=''; taxTypeFilter=''; taxFromDate=''; taxToDate=''">Reset</button>
-      </div>
-
-      <div class="money-row section-gap" style="padding: 12px 16px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 16px;">
-        <div><small style="color: #1e40af;">TAXES PAID IN PERIOD</small><b style="color: #1d4ed8; font-size: 1.25rem;">{{ currency(visibleTaxesTotal) }}</b></div>
-        <div><small style="color: #1e40af;">PROPERTY TAX</small><b style="color: #2563eb;">{{ currency(visiblePropertyTaxTotal) }}</b></div>
-        <div><small style="color: #1e40af;">WATER TAX</small><b style="color: #2563eb;">{{ currency(visibleWaterTaxTotal) }}</b></div>
-        <div><small style="color: #1e40af;">PAYMENT RECORDS</small><b style="color: #1d4ed8;">{{ visibleTaxes.length }}</b></div>
-      </div>
-
-      <article class="card table-card"><div class="table-wrap"><table><thead><tr><th>Group</th><th>Tax</th><th>Period</th><th>Paid on</th><th>Amount</th><th>Reference / notes</th><th></th></tr></thead><tbody><tr *ngFor="let t of visibleTaxes"><td>{{ t.group_name }}</td><td>{{ t.tax_type }}</td><td>{{ t.period || '—' }}</td><td>{{ t.paid_on | date:'dd MMM yyyy' }}</td><td>{{ currency(t.amount) }}</td><td>{{ t.reference || '—' }}<small>{{ t.notes }}</small></td><td><button class="text-btn" (click)="editTax(t)">Edit</button><button class="icon-btn danger" aria-label="Delete tax payment" (click)="removeExpense('taxes', t.id)">×</button></td></tr></tbody></table></div><div class="empty" *ngIf="!visibleTaxes.length">No tax payments match the selected filters.</div></article>
-    </section>
-    <section *ngIf="!loading && view === 'electricity'" class="page">
-      <div class="toolbar"><div><h2>Owner-paid electricity</h2><p>Record EB bills you paid and track reimbursement from tenants.</p></div><button class="btn primary" [disabled]="!ownerProperties.length" (click)="openElectricity()">＋ Record EB bill</button></div>
-      <article class="card collection"><h2>Pending from tenants: {{ currency(electricityPending) }}</h2><p class="location">Separate from rent. Set “Owner pays and collects” in a property's details to record its bills.</p></article>
-      <article class="card table-card section-gap"><div class="table-wrap"><table><thead><tr><th>Property</th><th>Bill period</th><th>Owner paid on</th><th>Bill</th><th>Collected</th><th>Pending</th><th>Reference / notes</th><th></th></tr></thead><tbody><tr *ngFor="let b of electricity"><td>{{ b.property_name }}<small>{{ b.group_name || 'Ungrouped' }}</small></td><td>{{ b.period }}</td><td>{{ b.paid_on | date:'dd MMM yyyy' }}</td><td>{{ currency(b.amount) }}</td><td>{{ currency(b.collected) }}</td><td class="balance">{{ currency(b.amount - b.collected) }}</td><td>{{ b.reference || '—' }}<small>{{ b.notes }}</small></td><td><button class="text-btn" (click)="editElectricity(b)">Edit bill</button><button class="text-btn" (click)="openCollection(b)">Update collected</button><button class="icon-btn danger" aria-label="Delete electricity bill" (click)="removeExpense('electricity', b.id)">×</button></td></tr></tbody></table></div><div class="empty" *ngIf="!electricity.length">No owner-paid electricity bills recorded.</div></article>
-    </section>
-    <section *ngIf="!loading && view === 'history'" class="page">
-      <div class="toolbar"><div><h2>Edit history</h2><p>Changes recorded from this update onward. Earlier edits are not available.</p></div></div>
-      <div class="filters"><select aria-label="History record type" [(ngModel)]="historyFilter"><option value="">All records</option><option value="tenants">Tenants</option><option value="tenancies">Tenancies</option><option value="rent_rates">Rent rates</option><option value="deposit_refunds">Deposit refunds</option><option value="property_expenses">Property expenses</option><option value="properties">Properties</option><option value="property_groups">Groups</option><option value="rent_payments">Rent payments</option><option value="group_taxes">Tax payments</option><option value="electricity_bills">Electricity bills</option></select></div>
-      <article class="card table-card"><div class="table-wrap"><table><thead><tr><th>Edited at</th><th>Record</th><th>Changes</th></tr></thead><tbody><tr *ngFor="let h of visibleHistory"><td>{{ h.edited_at | date:'dd MMM yyyy, HH:mm:ss' }}</td><td><b>{{ entityName(h.entity) }} #{{ h.record_id }}</b><small>{{ h.label }}</small></td><td class="history-changes"><div *ngFor="let c of h.changes"><b>{{ fieldName(c.field) }}</b><span>{{ historyValue(c.before) }} → {{ historyValue(c.after) }}</span></div></td></tr></tbody></table></div><div class="empty" *ngIf="!visibleHistory.length">No edits recorded yet.</div></article>
-    </section>
-    <section *ngIf="!loading && view === 'tenants'" class="page">
-      <div class="toolbar"><div><h2>Tenant registry</h2><p>Keep each person's details once, then link their stays to properties.</p></div><button class="btn primary" (click)="openTenant()">＋ Add tenant</button></div>
-      <div class="filters" style="margin-bottom: 16px;">
-        <label class="search" style="flex: 1; max-width: 400px;">⌕<input [(ngModel)]="tenantSearch" placeholder="Search tenant by name, phone, or notes..."></label>
-        <button *ngIf="tenantSearch" class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" (click)="tenantSearch = ''">Reset</button>
-      </div>
-      <div class="property-grid"><article class="property-card" *ngFor="let t of filteredTenants"><h3>{{ t.name }}</h3><p class="location">{{ t.phone || 'No phone number' }}</p><p class="location">{{ t.notes }}</p><div class="tenant" style="margin-top: 8px;"><small>LIFETIME RENT RECEIVED</small><b style="color: #15803d;">{{ currency(tenantTotalPaid(t.name)) }}</b></div><footer><button (click)="openTenant(t)">Edit tenant</button></footer></article></div>
-      <p *ngIf="!filteredTenants.length && tenants.length" class="empty card">No tenants found matching "{{ tenantSearch }}".</p>
-      <p *ngIf="!tenants.length" class="empty card">Add your current or former tenants to get started.</p>
-      <div class="toolbar section-gap"><div><h2>Tenancy & rent history</h2><p>Add previous stays and rent changes for accurate historical balances.</p></div><button class="btn primary" [disabled]="!tenants.length || !properties.length" (click)="openTenancy()">＋ Add tenancy</button></div>
-      <div class="filters" style="margin-bottom: 12px;">
-        <label class="search">⌕<input [(ngModel)]="tenancySearch" placeholder="Filter by property, group, tenant, or shop name"></label>
-        <select aria-label="Filter tenancy by group" [(ngModel)]="tenancyGroupFilter">
-          <option value="">All groups</option>
-          <option value="ungrouped">Ungrouped</option>
-          <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
-        </select>
-      </div>
-      <p class="notice">Enter the tenant's actual move-in date and starting rent. If rent was revised or increased over time, use "Add rent revision" to record each rate change and its effective month. Missing or conflicting history is marked incomplete, not treated as zero rent. Billing uses full calendar months.</p>
-      <article class="card collection section-gap" *ngFor="let t of filteredTenancies">
-        <div class="toolbar">
-          <div>
-            <h2>
-              {{ t.property_name }}
-              <small *ngIf="t.group_name" style="font-size: 0.75rem; font-weight: 600; color: #4b5563; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; margin-left: 4px;">{{ t.group_name }}</small>
-              <span *ngIf="t.property_type" class="pill" style="font-size: 0.75rem; vertical-align: middle; margin: 0 4px;">{{ t.property_type }}</span>
-              — <span *ngIf="t.business_name" style="color: #2563eb;">{{ t.business_name }} ({{ t.tenant_name }})</span><span *ngIf="!t.business_name">{{ t.tenant_name }}</span>
-              <span *ngIf="t.is_settled || (t.deposit_balance === 0 && (t.total_refunded || t.total_deductions))" class="pill" style="background: #dcfce7; color: #15803d; font-weight: 700; font-size: 0.75rem; margin-left: 6px;">✓ Settlement Completed</span>
-              <span *ngIf="!t.is_settled && (t.deposit_balance || 0) > 0" class="pill" style="background: #fef3c7; color: #92400e; font-weight: 600; font-size: 0.75rem; margin-left: 6px;">Deposit Held: {{ currency(t.deposit_balance) }}</span>
-            </h2>
-            <p>{{ t.start_date || 'Move-in unknown' }} → {{ t.end_date || 'Ongoing' }}</p>
-            <p>{{ t.notes }}</p>
-          </div>
-          <div class="toolbar-actions">
-            <button class="btn secondary" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;" (click)="openTransfer(t)" title="Transfer tenancy to another tenant">⇄ Transfer / Takeover</button>
-            <button class="btn secondary" (click)="openTenancy(t)">Edit tenancy</button>
-            <button class="btn secondary" (click)="openRate(t)">＋ Add rent revision</button>
-            <button class="btn primary" (click)="openRefund(t)">＋ Record deposit refund</button>
-          </div>
-        </div>
-
-        <div class="money-row section-gap" style="padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-          <div><small>ORIGINAL DEPOSIT</small><b>{{ currency(t.deposit) }}</b></div>
-          <div><small>REFUNDED TO TENANT</small><b style="color: #10b981;">{{ currency(t.total_refunded || 0) }}</b></div>
-          <div><small>DEDUCTIONS (REPAIRS/PAINTING)</small><b style="color: #f59e0b;">{{ currency(t.total_deductions || 0) }}</b></div>
-          <div>
-            <small>SETTLEMENT STATUS</small>
-            <b [style.color]="t.is_settled || (t.deposit_balance || 0) === 0 ? '#15803d' : '#ef4444'">
-              {{ t.is_settled || (t.deposit_balance || 0) === 0 ? 'Fully Settled (₹0)' : currency(t.deposit_balance) }}
-            </b>
-          </div>
-        </div>
-
-        <div class="table-wrap section-gap" *ngIf="tenancyRates(t.id).length">
-          <table><thead><tr><th>Effective month</th><th>Monthly rent</th><th></th></tr></thead><tbody><tr *ngFor="let r of tenancyRates(t.id)"><td>{{ r.effective_month }}</td><td>{{ currency(r.amount) }}</td><td><button class="text-btn" (click)="openRate(t,r)">Edit</button></td></tr></tbody></table>
-        </div>
-
-        <div *ngIf="t.refunds?.length" class="section-gap">
-          <h4 style="margin: 8px 0; font-size: 0.9rem; color: #475569;">Deposit Refund Installments & Deductions</h4>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr><th>Refund Date</th><th>Refunded Amount</th><th>Deduction for Repairs</th><th>Reason & Ref</th><th>Settlement</th><th>Notes / Justification</th><th></th></tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let ref of t.refunds">
-                  <td>{{ ref.refunded_on || 'Date unknown' }}</td>
-                  <td>
-                    <b style="color: #10b981;">{{ currency(ref.amount) }}</b>
-                    <small *ngIf="ref.payment_method && ref.amount > 0"> ({{ ref.payment_method }})</small>
-                    <small *ngIf="ref.amount === 0" style="color: #64748b;"> (No cash refund)</small>
-                  </td>
-                  <td>
-                    <span *ngIf="ref.deduction_amount" style="color: #d97706; font-weight: 600;">{{ currency(ref.deduction_amount) }}</span>
-                    <span *ngIf="!ref.deduction_amount">—</span>
-                  </td>
-                  <td>
-                    <span *ngIf="ref.deduction_reason" class="pill" style="background: #fef3c7; color: #92400e; font-size: 0.75rem;">{{ ref.deduction_reason }}</span>
-                    <span *ngIf="ref.reference"><br><small>Ref: {{ ref.reference }}</small></span>
-                    <span *ngIf="!ref.deduction_reason && !ref.reference">—</span>
-                  </td>
-                  <td>
-                    <span *ngIf="ref.is_final_settlement" class="pill" style="background: #dcfce7; color: #15803d; font-size: 0.75rem; font-weight: 600;">Final</span>
-                    <span *ngIf="!ref.is_final_settlement" class="pill" style="background: #f1f5f9; color: #64748b; font-size: 0.75rem;">Installment</span>
-                  </td>
-                  <td>{{ ref.notes || '—' }}</td>
-                  <td>
-                    <button class="text-btn" (click)="openRefund(t, ref)">Edit</button>
-                    <button class="text-btn" style="color: #ef4444;" (click)="removeRefund(ref)">Delete</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </article>
-      <p *ngIf="!filteredTenancies.length && tenancies.length" class="empty card">No tenancy records match the current filter.</p>
-      <p *ngIf="!tenancies.length" class="empty card">No tenancy history yet. Existing payments remain preserved until you assign them.</p>
-    </section>
     <section *ngIf="!loading && view === 'archive'" class="page">
       <app-archive [properties]="properties" [tenancies]="tenancies" (changed)="loadAll()"></app-archive>
     </section>
   </main>
 </div>
 
-<div class="modal-backdrop" *ngIf="modal" (mousedown)="modal = null"><div class="modal" (mousedown)="$event.stopPropagation()">
-  <button class="modal-close" (click)="modal = null">×</button>
-  <ng-container *ngIf="modal === 'property'"><p class="eyebrow">PROPERTY</p><h2>{{ propertyForm.id ? 'Edit property' : 'Add a new property' }}</h2><p class="modal-sub" *ngIf="!propertyForm.id">Enter property details and optionally assign its current tenant from the registry.</p><p class="modal-sub" *ngIf="propertyForm.id && propertyHasTenancyHistory">Tenant, rent and deposit are managed under Tenants & tenancies.</p><p class="modal-sub" *ngIf="propertyForm.id && !propertyHasTenancyHistory">This property uses legacy rent details. You can update its defaults or assign a tenancy under Tenants & tenancies.</p><form (ngSubmit)="saveProperty()"><div class="form-grid"><div class="notice" *ngIf="!groups.length" style="grid-column: 1 / -1; background: #fef2f2; border: 1px solid #f87171; color: #991b1b; padding: 10px; border-radius: 6px;"><b>Group required:</b> You need to create at least one property group before adding properties. <button type="button" class="btn secondary" style="margin-left: 8px;" (click)="openGroup()">＋ Add group now</button></div><label class="full">Property name<input required [(ngModel)]="propertyForm.name" name="name" placeholder="e.g. Lakeview Apartment 3B"></label><label>Property type<select [(ngModel)]="propertyForm.property_type" name="property_type"><option value="House">🏠 House</option><option value="Shop">🏪 Shop</option><option value="Storage unit">📦 Storage unit</option><option value="Office">🏢 Office</option><option value="Other">⌂ Other</option></select></label><label>Property group <span style="color: #ef4444;">*</span><select required [(ngModel)]="propertyForm.group_id" name="group_id"><option [ngValue]="null" disabled>Select property group (required)</option><option *ngFor="let g of groups" [ngValue]="g.id">{{ g.name }}</option></select></label><label>Electricity bill paid by<select [(ngModel)]="propertyForm.electricity_payer" name="electricity_payer"><option value="Tenant">Tenant pays directly</option><option value="Owner">Owner pays and collects</option></select></label><label>Rent due day<input type="number" min="1" max="31" [(ngModel)]="propertyForm.due_day" name="due_day"></label><label class="full">Address<input [(ngModel)]="propertyForm.address" name="address" placeholder="Full street address"></label>    <ng-container *ngIf="!propertyForm.id">
-      <div class="full" style="background: var(--ink-50); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-top: 2px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <label style="font-weight: 700; color: var(--ink-800); margin: 0; font-size: 11px;">
-            CURRENT TENANT OCCUPANCY
-          </label>
-          <span style="font-size: 11px; font-weight: 600; color: var(--primary);">
-            {{ filteredPropertyTenants.length }} of {{ tenants.length }} tenants
-          </span>
-        </div>
+<!-- Global Modals -->
+<div class="modal-backdrop" *ngIf="modal" (mousedown)="modal = null">
+  <div class="modal" (mousedown)="$event.stopPropagation()">
+    <button class="modal-close" (click)="modal = null">×</button>
 
-        <!-- Tenant Search Bar -->
-        <div class="search" style="min-width: 100%; width: 100%; margin-bottom: 10px; background: #ffffff;">
-          ⌕ <input [(ngModel)]="propertyTenantSearch" name="prop_tenant_search" placeholder="Type to search tenant by name or phone..." style="font-size: 13px;">
-          <button *ngIf="propertyTenantSearch" type="button" class="icon-btn" style="padding: 0 4px; font-size: 14px; color: var(--ink-500);" (click)="propertyTenantSearch = ''" title="Clear search">×</button>
-        </div>
-
-        <!-- Quick Pick Option Buttons -->
-        <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;">
-          <button type="button" class="filter-chip" [class.active]="propertyForm.tenant_selection === 0" (click)="selectPropertyTenant(0)">
-            🏠 Vacant / No tenant
-          </button>
-          <button type="button" class="filter-chip" [class.active]="propertyForm.tenant_selection === -1" (click)="selectPropertyTenant(-1)">
-            ＋ Quick add new tenant...
-          </button>
-        </div>
-
-        <!-- Dropdown select -->
-        <label style="font-size: 10.5px; color: var(--ink-500); margin-bottom: 4px; font-weight: 600;">SELECT FROM MATCHING TENANTS:</label>
-        <select [(ngModel)]="propertyForm.tenant_selection" name="tenant_selection" style="width: 100%; font-size: 13px; font-weight: 500;">
-          <option [ngValue]="0">🏠 Vacant / No tenant</option>
-          <option [ngValue]="-1">＋ Quick add new tenant...</option>
-          <option *ngFor="let t of filteredPropertyTenants" [ngValue]="t.id">
-            👤 {{ t.name }} {{ t.phone ? '· ' + t.phone : '' }}
-          </option>
-        </select>
-
-        <!-- Selected Tenant Indicator Badge -->
-        <div *ngIf="propertyForm.tenant_selection > 0" style="margin-top: 10px; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #065f46; display: flex; justify-content: space-between; align-items: center;">
-          <span>✓ Selected: <b>{{ selectedTenantName }}</b></span>
-          <button type="button" class="text-btn" style="padding: 2px 8px; font-size: 11px;" (click)="selectPropertyTenant(0)">Change to Vacant</button>
-        </div>
-
-        <!-- No match helper -->
-        <div *ngIf="propertyTenantSearch && !filteredPropertyTenants.length" style="font-size: 12px; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; padding: 8px 10px; border-radius: 6px; margin-top: 8px; display: flex; align-items: center; justify-content: space-between;">
-          <span>No registered tenant matches "<b>{{ propertyTenantSearch }}</b>"</span>
-          <button type="button" class="text-btn" (click)="selectPropertyTenant(-1); propertyForm.new_tenant_name = propertyTenantSearch">＋ Add "{{ propertyTenantSearch }}" as new tenant</button>
-        </div>
-      </div>
-
-      <ng-container *ngIf="propertyForm.tenant_selection === -1">
-        <label>New tenant name <span style="color: #ef4444;">*</span>
-          <input required [(ngModel)]="propertyForm.new_tenant_name" name="new_tenant_name" placeholder="e.g. John Doe">
-        </label>
-        <label>New tenant phone
-          <input [(ngModel)]="propertyForm.new_tenant_phone" name="new_tenant_phone" placeholder="Phone number">
-        </label>
-      </ng-container>
-
-      <ng-container *ngIf="propertyForm.tenant_selection !== 0">
-        <label class="full" *ngIf="propertyForm.property_type === 'Shop'">Shop / Business trade name (optional)
-          <input [(ngModel)]="propertyForm.business_name" name="business_name" placeholder="e.g. Kathir Steels, Sri Krishna Sweets">
-        </label>
-        <label>Move-in date (optional)
-          <input type="date" [(ngModel)]="propertyForm.start_date" name="start_date">
-        </label>
-        <label>Monthly rent (₹)
-          <input type="number" min="0" step="0.01" [(ngModel)]="propertyForm.monthly_rent" name="rent" placeholder="Agreed rent">
-        </label>
-        <label>Deposit (₹)
-          <input type="number" min="0" step="0.01" [(ngModel)]="propertyForm.deposit" name="deposit" placeholder="0">
-        </label>
-      </ng-container>
-    </ng-container><ng-container *ngIf="propertyForm.id && !propertyHasTenancyHistory"><label>Tenant name<input [(ngModel)]="propertyForm.tenant_name" name="tenant" placeholder="Current tenant"></label><label>Tenant phone<input [(ngModel)]="propertyForm.tenant_phone" name="phone" placeholder="Phone number"></label><label>Monthly rent (₹)<input required type="number" min="0" [(ngModel)]="propertyForm.monthly_rent" name="rent"></label><label>Advance paid (₹)<input type="number" min="0" [(ngModel)]="propertyForm.advance_paid" name="advance"></label></ng-container><label class="check full"><input type="checkbox" [(ngModel)]="propertyForm.active" name="active"> Property is active</label></div><div class="modal-actions"><button type="button" class="btn secondary" (click)="modal = null">Cancel</button><button class="btn primary" [disabled]="!propertyForm.name || !propertyForm.group_id">Save property</button></div></form></ng-container>
-  <ng-container *ngIf="modal === 'payment'">
-    <p class="eyebrow">RENT COLLECTION</p>
-    <h2>{{ editingPayment ? 'Edit rent payment' : 'Record rent payment' }}</h2>
-    <p class="modal-sub">
-      Record rent received from the tenant. In postpaid rental cycles, rent received in <b>September</b> covers the tenant's stay during <b>August</b>.
-    </p>
-    <form (ngSubmit)="savePayment()">
-      <div class="form-grid">
-        <label class="full">Property <span style="color: #ef4444;">*</span>
-          <select required [(ngModel)]="paymentForm.property_id" (ngModelChange)="selectPaymentTenancy()" name="property">
-            <option [ngValue]="0" disabled>Select a property</option>
-            <option *ngFor="let p of properties" [ngValue]="p.id">{{ p.name }} — {{ p.tenant_name || 'Vacant' }}</option>
-          </select>
-        </label>
-
-        <div class="full" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 4px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
-            <label style="font-weight: 700; color: #1e293b; margin: 0;">
-              Rental Period / Stay Month <span style="color: #ef4444;">*</span>
-            </label>
-            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-              <button type="button" class="btn secondary" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;"
-                [style.background]="paymentForm.rental_month === getPreviousMonth(paymentForm.paid_on) ? '#dbeafe' : ''"
-                [style.borderColor]="paymentForm.rental_month === getPreviousMonth(paymentForm.paid_on) ? '#2563eb' : ''"
-                [style.color]="paymentForm.rental_month === getPreviousMonth(paymentForm.paid_on) ? '#1e40af' : ''"
-                (click)="setPaymentRentalMonth(getPreviousMonth(paymentForm.paid_on))">
-                ⚡ Postpaid: {{ getPreviousMonth(paymentForm.paid_on) | date:'MMM yyyy' }} (Default)
-              </button>
-              <button type="button" class="btn secondary" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;"
-                [style.background]="paymentForm.rental_month === (paymentForm.paid_on ? paymentForm.paid_on.slice(0, 7) : getCurrentMonth()) ? '#dbeafe' : ''"
-                [style.borderColor]="paymentForm.rental_month === (paymentForm.paid_on ? paymentForm.paid_on.slice(0, 7) : getCurrentMonth()) ? '#2563eb' : ''"
-                [style.color]="paymentForm.rental_month === (paymentForm.paid_on ? paymentForm.paid_on.slice(0, 7) : getCurrentMonth()) ? '#1e40af' : ''"
-                (click)="setPaymentRentalMonth(paymentForm.paid_on ? paymentForm.paid_on.slice(0, 7) : getCurrentMonth())">
-                ⚡ Same Month: {{ (paymentForm.paid_on ? paymentForm.paid_on.slice(0, 7) : getCurrentMonth()) | date:'MMM yyyy' }}
-              </button>
-            </div>
+    <!-- Property Modal -->
+    <ng-container *ngIf="modal === 'property'">
+      <p class="eyebrow">PROPERTY</p>
+      <h2>{{ propertyForm.id ? 'Edit property' : 'Add a new property' }}</h2>
+      <p class="modal-sub" *ngIf="!propertyForm.id">Enter property details and optionally assign its current tenant from the registry.</p>
+      <p class="modal-sub" *ngIf="propertyForm.id && propertyHasTenancyHistory">Tenant, rent and deposit are managed under Tenants & tenancies.</p>
+      <p class="modal-sub" *ngIf="propertyForm.id && !propertyHasTenancyHistory">This property uses legacy rent details. You can update its defaults or assign a tenancy under Tenants & tenancies.</p>
+      <form (ngSubmit)="saveProperty()">
+        <div class="form-grid">
+          <div class="notice" *ngIf="!groups.length" style="grid-column: 1 / -1; background: #fef2f2; border: 1px solid #f87171; color: #991b1b; padding: 10px; border-radius: 6px;">
+            <b>Group required:</b> You need to create at least one property group before adding properties.
+            <button type="button" class="btn secondary" style="margin-left: 8px;" (click)="openGroup()">＋ Add group now</button>
           </div>
-          <input required type="month" [(ngModel)]="paymentForm.rental_month" (ngModelChange)="selectPaymentTenancy()" name="month" style="width: 100%; margin-bottom: 6px;">
-          <div style="font-size: 0.8rem; color: #334155; background: #e0f2fe; border: 1px solid #bae6fd; padding: 6px 10px; border-radius: 6px; margin-top: 4px;">
-            💡 <b>Billing cycle breakdown:</b> {{ billingCycleDescription(paymentForm.rental_month, paymentForm.paid_on) }}
-          </div>
-        </div>
-
-        <label class="full">Tenancy stay
-          <select [(ngModel)]="paymentForm.tenancy_id" name="payment_tenancy" (ngModelChange)="!editingPayment && fillPaymentRent()">
-            <option [ngValue]="null">{{ paymentNeedsTenancy ? 'Select tenancy' : 'Legacy payment — tenancy not set up' }}</option>
-            <option *ngFor="let t of paymentTenancies" [ngValue]="t.id">{{ t.tenant_name }} · {{ t.start_date || 'Move-in unknown' }} to {{ t.end_date || 'ongoing' }}</option>
-          </select>
-          <span *ngIf="paymentNeedsTenancy && !paymentTenancies.length" style="color: #ef4444; font-size: 0.8rem;">No tenancy covers {{ paymentForm.rental_month | date:'MMMM yyyy' }}. Check tenancy start/end dates.</span>
-        </label>
-
-        <label>Amount paid (₹) <span style="color: #ef4444;">*</span>
-          <input required type="number" min="1" [(ngModel)]="paymentForm.amount" name="amount">
-        </label>
-        <label>Payment receipt date <span style="color: #ef4444;">*</span>
-          <input required type="date" [(ngModel)]="paymentForm.paid_on" (ngModelChange)="onPaymentPaidOnChange()" name="paid_on">
-        </label>
-        <label>Payment method
-          <select [(ngModel)]="paymentForm.payment_method" name="method">
-            <option>Cash</option>
-            <option>Bank transfer</option>
-            <option>UPI</option>
-            <option>Cheque</option>
-            <option>Other</option>
-          </select>
-        </label>
-        <label class="full">Reference / transaction ID
-          <input [(ngModel)]="paymentForm.reference" name="reference" placeholder="e.g. UPI / IMPS / Cheque number">
-        </label>
-        <label class="full">Notes
-          <textarea [(ngModel)]="paymentForm.notes" name="notes" placeholder="Optional notes for this payment"></textarea>
-        </label>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
-        <button class="btn primary" [disabled]="paymentNeedsTenancy && !paymentForm.tenancy_id">
-          {{ editingPayment ? 'Save changes' : 'Record payment' }}
-        </button>
-      </div>
-    </form>
-  </ng-container>
-
-  <ng-container *ngIf="modal === 'group'"><h2>{{ editingGroup ? 'Edit property group' : 'Add property group' }}</h2><p class="modal-sub">Give the apartment, complex or other group a name.</p><form #gf="ngForm" (ngSubmit)="gf.valid && saveGroup()"><div class="form-grid"><label class="full">Group name<input required maxlength="120" [(ngModel)]="groupForm.name" name="group_name" placeholder="e.g. Lakshmi Apartments"></label><label class="full">Group type<input required maxlength="80" [(ngModel)]="groupForm.kind" name="kind" placeholder="Apartment, Shopping complex, or your own type" list="group-kinds"><datalist id="group-kinds"><option value="Apartment"></option><option value="Shopping complex"></option></datalist></label></div><div class="modal-actions"><button class="btn primary" [disabled]="gf.invalid">Save group</button></div></form></ng-container>
-  <ng-container *ngIf="modal === 'tax'"><h2>{{ editingTax ? 'Edit group tax payment' : 'Record group tax payment' }}</h2><p class="modal-sub">Enter a property or water tax payment already made.</p><form #tf="ngForm" (ngSubmit)="tf.valid && saveTax()"><div class="form-grid"><label class="full">Group<select required [(ngModel)]="taxForm.group_id" name="tax_group"><option [ngValue]="0" disabled>Select group</option><option *ngFor="let g of groups" [ngValue]="g.id">{{ g.name }}</option></select></label><label>Tax type<select [(ngModel)]="taxForm.tax_type" name="tax_type"><option>Property tax</option><option>Water tax</option></select></label><label>Amount paid (₹)<input required type="number" min="0.01" step="0.01" [(ngModel)]="taxForm.amount" name="tax_amount"></label><label>Paid on<input required type="date" [(ngModel)]="taxForm.paid_on" name="tax_date"></label><label>Tax period<input [(ngModel)]="taxForm.period" name="tax_period" placeholder="e.g. Apr–Sep 2026"></label><label class="full">Receipt / reference<input [(ngModel)]="taxForm.reference" name="tax_ref"></label><label class="full">Notes<textarea [(ngModel)]="taxForm.notes" name="tax_notes"></textarea></label></div><div class="modal-actions"><button class="btn primary" [disabled]="tf.invalid || !taxForm.group_id">{{ editingTax ? 'Save changes' : 'Record tax' }}</button></div></form></ng-container>
-  <ng-container *ngIf="modal === 'electricity'"><h2>{{ editingElectricity ? 'Edit EB bill' : 'Record owner-paid EB bill' }}</h2><p class="modal-sub">Track the bill paid and how much the tenant has reimbursed.</p><form #ef="ngForm" (ngSubmit)="ef.valid && saveElectricity()"><div class="form-grid"><label class="full">Property<select required [(ngModel)]="electricityForm.property_id" name="eb_property"><option [ngValue]="0" disabled>Select property</option><option *ngFor="let p of ownerProperties" [ngValue]="p.id">{{ p.name }}</option></select></label><label>Bill period<input required [(ngModel)]="electricityForm.period" name="eb_period" placeholder="e.g. Jul–Aug 2026"></label><label>Owner paid on<input required type="date" [(ngModel)]="electricityForm.paid_on" name="eb_date"></label><label>Bill amount (₹)<input required type="number" min="0.01" step="0.01" [(ngModel)]="electricityForm.amount" name="eb_amount"></label><label>Already collected (₹)<input required type="number" min="0" [max]="electricityForm.amount" step="0.01" [(ngModel)]="electricityForm.collected" name="eb_collected"></label><label class="full">Reference<input [(ngModel)]="electricityForm.reference" name="eb_reference"></label><label class="full">Notes<textarea [(ngModel)]="electricityForm.notes" name="eb_notes"></textarea></label></div><div class="modal-actions"><button class="btn primary" [disabled]="ef.invalid || !electricityForm.property_id">{{ editingElectricity ? 'Save changes' : 'Record bill' }}</button></div></form></ng-container>
-  <ng-container *ngIf="modal === 'collection'"><h2>Update EB collection</h2><p class="modal-sub">Enter the total collected so far for this bill, including earlier payments.</p><form #cf="ngForm" (ngSubmit)="cf.valid && saveCollection()"><div class="form-grid"><label class="full">Total collected (₹)<input required type="number" min="0" [max]="collectionForm.amount" step="0.01" [(ngModel)]="collectionForm.collected" name="collected"></label></div><div class="modal-actions"><button class="btn primary" [disabled]="cf.invalid">Save collection</button></div></form></ng-container>
-
-  <ng-container *ngIf="modal === 'tenant'"><h2>{{ tenantForm.id ? 'Edit tenant' : 'Add tenant' }}</h2><p class="modal-sub">Use the same tenant record for their different stays.</p><form #tnf="ngForm" (ngSubmit)="tnf.valid && saveTenant()"><div class="form-grid"><label class="full">Name<input required [(ngModel)]="tenantForm.name" name="tn_name"></label><label class="full">Phone<input [(ngModel)]="tenantForm.phone" name="tn_phone"></label><label class="full">Notes<textarea [(ngModel)]="tenantForm.notes" name="tn_notes"></textarea></label></div><div class="modal-actions"><button class="btn primary" [disabled]="tnf.invalid">Save tenant</button></div></form></ng-container>
-  <ng-container *ngIf="modal === 'tenancy'"><h2>{{ tenancyForm.id ? 'Edit tenancy stay' : 'Add current or historical tenancy' }}</h2><p class="modal-sub">Move-in date represents when the tenant first occupied this unit. If the rent was revised later during their stay, enter the original move-in rent here and add the revised rent using "Add rent revision". Leave move-in blank only if the stay start date is completely unknown.</p><form #tyf="ngForm" (ngSubmit)="tyf.valid && saveTenancy()"><div class="form-grid"><label>Property<select required [(ngModel)]="tenancyForm.property_id" name="ty_property"><option [ngValue]="0" disabled>Select property</option><option *ngFor="let p of properties" [ngValue]="p.id">{{ p.name }}</option></select></label><label>Tenant<select required [(ngModel)]="tenancyForm.tenant_id" name="ty_tenant"><option [ngValue]="0" disabled>Select tenant</option><option *ngFor="let t of tenants" [ngValue]="t.id">{{ t.name }} · {{ t.phone || '#' + t.id }}</option></select></label><label class="full" *ngIf="isShopProperty(tenancyForm.property_id) || tenancyForm.business_name">Shop / Business trade name (optional)<input [(ngModel)]="tenancyForm.business_name" name="ty_business_name" placeholder="e.g. Kathir Steels, Sri Krishna Sweets"></label><label>Original move-in date (optional)<input type="date" [(ngModel)]="tenancyForm.start_date" name="ty_start"></label><label>Move-out date (leave blank if ongoing)<input type="date" [(ngModel)]="tenancyForm.end_date" name="ty_end"></label><label>Starting rent at move-in (₹)<input [disabled]="!tenancyForm.start_date" type="number" min="0" step="0.01" [(ngModel)]="tenancyForm.initial_rent" name="ty_rent" placeholder="Rent at start of stay"></label><label>Security deposit (₹)<input required type="number" min="0" step="0.01" [(ngModel)]="tenancyForm.deposit" name="ty_deposit"></label><label class="full">Notes<textarea [(ngModel)]="tenancyForm.notes" name="ty_notes" placeholder="Optional notes about this stay"></textarea></label></div><div class="modal-actions"><button type="button" class="btn secondary" (click)="modal = null">Cancel</button><button class="btn primary" [disabled]="tyf.invalid || !tenancyForm.property_id || !tenancyForm.tenant_id">Save tenancy</button></div></form></ng-container>
-  <ng-container *ngIf="modal === 'rate'"><h2>{{ rateForm.id ? 'Edit rent revision' : 'Add rent revision (rate change)' }}</h2><p class="modal-sub">Enter the month this revised rent took effect (e.g. 2025-04 for April 2025). This rate will apply continuously from that month forward until the next revision or move-out.</p><form #rrf="ngForm" (ngSubmit)="rrf.valid && saveRate()"><div class="form-grid"><label>Effective from month (YYYY-MM)<input required type="month" [(ngModel)]="rateForm.effective_month" name="rr_month"></label><label>Revised monthly rent (₹)<input required type="number" min="0" step="0.01" [(ngModel)]="rateForm.amount" name="rr_amount" placeholder="e.g. 15000"></label></div><div class="modal-actions"><button type="button" class="btn secondary" (click)="modal = null">Cancel</button><button class="btn primary" [disabled]="rrf.invalid">{{ rateForm.id ? 'Save changes' : 'Add rent revision' }}</button></div></form></ng-container>
-  <ng-container *ngIf="modal === 'refund'">
-    <h2>{{ editingRefund ? 'Edit deposit refund & settlement' : 'Record deposit refund & settlement' }}</h2>
-    <p class="modal-sub" *ngIf="selectedTenancyForRefund">
-      <b>{{ selectedTenancyForRefund.property_name }}</b> — {{ selectedTenancyForRefund.tenant_name }} · Original deposit: <b>{{ currency(selectedTenancyForRefund.deposit) }}</b>.
-      <span *ngIf="(selectedTenancyForRefund.deposit_balance !== undefined ? selectedTenancyForRefund.deposit_balance : selectedTenancyForRefund.deposit) as bal"> (Remaining balance: {{ currency(bal) }})</span>
-    </p>
-    <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
-      <button type="button" class="btn secondary" style="font-size: 0.8rem; padding: 6px 10px;" (click)="autoFillRemainingDeduction()">
-        ⚡ Allocate remaining balance as deduction
-      </button>
-      <button type="button" class="btn secondary" style="font-size: 0.8rem; padding: 6px 10px;" (click)="setFullDeduction()">
-        🧹 Full deposit used for repairs (₹0 cash refund)
-      </button>
-    </div>
-    <form #rff="ngForm" (ngSubmit)="rff.valid && saveRefund()">
-      <div class="form-grid">
-        <label>Amount refunded to tenant (₹)
-          <input required type="number" min="0" step="0.01" [(ngModel)]="refundForm.amount" name="ref_amount" placeholder="e.g. 15000">
-        </label>
-        <label>Refunded on date
-          <input required type="date" [(ngModel)]="refundForm.refunded_on" name="ref_date">
-        </label>
-        <label>Payment method
-          <select [(ngModel)]="refundForm.payment_method" name="ref_method">
-            <option>Bank transfer</option>
-            <option>UPI</option>
-            <option>Cash</option>
-            <option>Cheque</option>
-            <option>No cash refund (Deductions only)</option>
-            <option>Other</option>
-          </select>
-        </label>
-        <label>Transaction / receipt ref
-          <input [(ngModel)]="refundForm.reference" name="ref_reference" placeholder="e.g. UPI Ref / Cheque No">
-        </label>
-        <label class="full">
-          Deduction amount for whitewashing / repairs (₹)
-          <input type="number" min="0" step="0.01" [(ngModel)]="refundForm.deduction_amount" name="ref_deduction" placeholder="0">
-        </label>
-        <div class="full" style="margin-top: -6px;">
-          <label>Deduction reason / category</label>
-          <input [(ngModel)]="refundForm.deduction_reason" name="ref_ded_reason" placeholder="e.g. Whitewashing, wall painting & repairs">
-          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
-            <button type="button" class="btn secondary" style="font-size: 0.75rem; padding: 3px 8px;" (click)="setDeductionReason('Whitewashing & painting charges')">🎨 Whitewashing & painting</button>
-            <button type="button" class="btn secondary" style="font-size: 0.75rem; padding: 3px 8px;" (click)="setDeductionReason('Repairs & maintenance charges')">🛠 Repairs & maintenance</button>
-            <button type="button" class="btn secondary" style="font-size: 0.75rem; padding: 3px 8px;" (click)="setDeductionReason('Deep cleaning & sanitization')">🧹 Deep cleaning</button>
-            <button type="button" class="btn secondary" style="font-size: 0.75rem; padding: 3px 8px;" (click)="setDeductionReason('Electricity / EB bill arrears')">ϟ EB arrears</button>
-            <button type="button" class="btn secondary" style="font-size: 0.75rem; padding: 3px 8px;" (click)="setDeductionReason('Rent arrears adjustment')">₹ Rent due</button>
-          </div>
-        </div>
-        <label class="check full" style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 4px;">
-          <input type="checkbox" [(ngModel)]="refundForm.is_final_settlement" name="ref_final">
-          <span><b>Mark as Full Settlement Completed</b> (Closing this deposit settlement; no further refund owed)</span>
-        </label>
-        <label class="full">Notes & Justification for refund / deductions
-          <textarea [(ngModel)]="refundForm.notes" name="ref_notes" placeholder="Explain the deduction details (e.g. ₹3,000 for whitewashing labor + ₹2,000 for electrical switch replacement)"></textarea>
-        </label>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
-        <button class="btn primary" [disabled]="rff.invalid || (!refundForm.amount && !refundForm.deduction_amount && !refundForm.is_final_settlement)">
-          {{ editingRefund ? 'Save changes' : 'Record refund & settlement' }}
-        </button>
-      </div>
-    </form>
-  </ng-container>
-  <ng-container *ngIf="modal === 'expense'">
-    <h2>{{ editingExpense ? 'Edit property expense' : 'Record property expense' }}</h2>
-    <p class="modal-sub">Record maintenance, repair, painting, or renovation costs paid for a property.</p>
-    <form #exf="ngForm" (ngSubmit)="exf.valid && saveExpense()">
-      <div class="form-grid">
-        <label class="full">Property <span style="color: #ef4444;">*</span>
-          <select required [(ngModel)]="expenseForm.property_id" name="ex_prop">
-            <option [ngValue]="0" disabled>Select property</option>
-            <option *ngFor="let p of properties" [ngValue]="p.id">{{ p.name }} ({{ p.group_name || 'Ungrouped' }})</option>
-          </select>
-        </label>
-        <label>Expense category <span style="color: #ef4444;">*</span>
-          <select required [(ngModel)]="expenseForm.category" name="ex_category">
-            <option value="Repair">Repair</option>
-            <option value="Renovation">Renovation</option>
-            <option value="Maintenance">Maintenance</option>
-            <option value="Painting">Painting</option>
-            <option value="Plumbing">Plumbing</option>
-            <option value="Electrical">Electrical</option>
-            <option value="Cleaning">Cleaning</option>
-            <option value="Carpentry">Carpentry</option>
-            <option value="Other">Other</option>
-          </select>
-        </label>
-        <label>Amount paid (₹) <span style="color: #ef4444;">*</span>
-          <input required type="number" min="0.01" step="0.01" [(ngModel)]="expenseForm.amount" name="ex_amount" placeholder="e.g. 5000">
-        </label>
-        <label>Expense date <span style="color: #ef4444;">*</span>
-          <input required type="date" [(ngModel)]="expenseForm.expense_date" name="ex_date">
-        </label>
-        <label>Payment method
-          <select [(ngModel)]="expenseForm.payment_method" name="ex_method">
-            <option>Bank transfer</option>
-            <option>UPI</option>
-            <option>Cash</option>
-            <option>Cheque</option>
-            <option>Other</option>
-          </select>
-        </label>
-        <label class="full">Paid to / Contractor / Vendor
-          <input [(ngModel)]="expenseForm.paid_to" name="ex_paid_to" placeholder="e.g. Ravi Plumbing Services, Asian Paints">
-        </label>
-        <label class="full">Bill / Invoice / Reference ID
-          <input [(ngModel)]="expenseForm.reference" name="ex_reference" placeholder="e.g. INV-2026-089, UPI Ref">
-        </label>
-        <label class="full">Notes & work description
-          <textarea [(ngModel)]="expenseForm.notes" name="ex_notes" placeholder="Describe the repair, renovation work, or parts replaced"></textarea>
-        </label>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
-        <button class="btn primary" [disabled]="exf.invalid || !expenseForm.property_id || !expenseForm.amount">{{ editingExpense ? 'Save changes' : 'Record expense' }}</button>
-      </div>
-    </form>
-  </ng-container>
-
-  <ng-container *ngIf="modal === 'transfer'">
-    <p class="eyebrow">TENANCY TAKEOVER / TRANSFER</p>
-    <h2>Transfer tenancy to incoming tenant</h2>
-    <p class="modal-sub" *ngIf="selectedTenancyForTransfer">
-      Transfer <b>{{ selectedTenancyForTransfer.property_name }}</b> from outgoing tenant <b>{{ selectedTenancyForTransfer.tenant_name }}</b> to a new tenant.
-    </p>
-
-    <form #trf="ngForm" (ngSubmit)="trf.valid && saveTransfer()">
-      <div class="form-grid">
-
-        <!-- Outgoing Tenancy Card Summary -->
-        <div class="full" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px;">
-          <h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 0.9rem;">1. Outgoing Tenant & Handover</h4>
-          <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.85rem; color: #475569; margin-bottom: 8px;">
-            <span>Current Tenant: <b style="color: #0f172a;">{{ selectedTenancyForTransfer?.tenant_name }}</b></span>
-            <span *ngIf="selectedTenancyForTransfer?.business_name">Shop Name: <b style="color: #2563eb;">{{ selectedTenancyForTransfer?.business_name }}</b></span>
-            <span>Security Deposit: <b style="color: #0f172a;">{{ currency(selectedTenancyForTransfer?.deposit || 0) }}</b></span>
-            <span>Deposit Held: <b style="color: #15803d;">{{ currency(selectedTenancyForTransfer?.deposit_balance !== undefined ? selectedTenancyForTransfer?.deposit_balance : selectedTenancyForTransfer?.deposit || 0) }}</b></span>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <label style="margin: 0;">Handover / Vacate Date <span style="color: #ef4444;">*</span>
-              <input required type="date" [(ngModel)]="transferForm.handover_date" name="tr_handover">
-            </label>
-            <label style="margin: 0;">Old Deposit Handling <span style="color: #ef4444;">*</span>
-              <select [(ngModel)]="transferForm.deposit_action" (ngModelChange)="onTransferDepositActionChange()" name="tr_dep_action">
-                <option value="rollover_to_new_tenant">🔄 Rollover / Transfer deposit to new tenant</option>
-                <option value="refund_now">💸 Settle & Refund outgoing tenant now</option>
-                <option value="settle_later">⏳ Settle old deposit later</option>
-              </select>
-            </label>
-          </div>
-
-          <!-- Refund & Deductions Details if refund_now -->
-          <div *ngIf="transferForm.deposit_action === 'refund_now'" style="margin-top: 10px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
-            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-              <button type="button" class="btn secondary" style="font-size: 0.75rem; padding: 3px 8px;" (click)="autoFillTransferDeduction()">
-                ⚡ Auto-fill whitewashing/repair deduction
-              </button>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-              <label style="margin: 0;">Refund Amount to Old Tenant (₹)
-                <input type="number" min="0" step="0.01" [(ngModel)]="transferForm.refund_amount" name="tr_ref_amt">
-              </label>
-              <label style="margin: 0;">Deduction for Repairs/Whitewashing (₹)
-                <input type="number" min="0" step="0.01" [(ngModel)]="transferForm.deduction_amount" name="tr_ded_amt">
-              </label>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
-              <label style="margin: 0;">Deduction Reason
-                <input [(ngModel)]="transferForm.deduction_reason" name="tr_ded_reason" placeholder="e.g. Whitewashing & repair charges">
-              </label>
-              <label style="margin: 0;">Refund Payment Method
-                <select [(ngModel)]="transferForm.refund_payment_method" name="tr_ref_method">
-                  <option>Bank transfer</option>
-                  <option>UPI</option>
-                  <option>Cash</option>
-                  <option>Cheque</option>
-                </select>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Incoming Tenant Section -->
-        <div class="full" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px;">
-          <h4 style="margin: 0 0 6px 0; color: #166534; font-size: 0.9rem;">2. Incoming Tenant Details</h4>
-          <label class="full" style="margin-bottom: 8px;">Select Incoming Tenant
-            <select [(ngModel)]="transferForm.new_tenant_id" name="tr_new_tenant_sel">
-              <option [ngValue]="0">＋ Quick add new tenant...</option>
-              <option *ngFor="let t of tenants" [ngValue]="t.id">{{ t.name }} · {{ t.phone || '#' + t.id }}</option>
+          <label class="full">Property name<input required [(ngModel)]="propertyForm.name" name="name" placeholder="e.g. Lakeview Apartment 3B"></label>
+          <label>Property type
+            <select [(ngModel)]="propertyForm.property_type" name="property_type">
+              <option value="House">🏠 House</option>
+              <option value="Shop">🏪 Shop</option>
+              <option value="Storage unit">📦 Storage unit</option>
+              <option value="Office">🏢 Office</option>
+              <option value="Other">⌂ Other</option>
             </select>
           </label>
-          <div *ngIf="!transferForm.new_tenant_id" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-            <label style="margin: 0;">New Tenant Name <span style="color: #ef4444;">*</span>
-              <input required [(ngModel)]="transferForm.new_tenant_name" name="tr_new_name" placeholder="e.g. Ravi Kumar">
-            </label>
-            <label style="margin: 0;">New Tenant Phone
-              <input [(ngModel)]="transferForm.new_tenant_phone" name="tr_new_phone" placeholder="e.g. 9876543210">
-            </label>
-          </div>
-          <label class="full" *ngIf="selectedTenancyForTransfer?.property_type === 'Shop' || selectedTenancyForTransfer?.business_name" style="margin-bottom: 0;">
-            Shop / Business Trade Name (Keep same or update)
-            <input [(ngModel)]="transferForm.business_name" name="tr_biz_name" placeholder="e.g. Ravi Medicals, Sri Krishna Sweets">
+          <label>Property group <span style="color: #ef4444;">*</span>
+            <select required [(ngModel)]="propertyForm.group_id" name="group_id">
+              <option [ngValue]="null" disabled>Select property group (required)</option>
+              <option *ngFor="let g of groups" [ngValue]="g.id">{{ g.name }}</option>
+            </select>
+          </label>
+          <label>Electricity bill paid by
+            <select [(ngModel)]="propertyForm.electricity_payer" name="electricity_payer">
+              <option value="Tenant">Tenant pays directly</option>
+              <option value="Owner">Owner pays and collects</option>
+            </select>
+          </label>
+          <label>Rent due day<input type="number" min="1" max="31" [(ngModel)]="propertyForm.due_day" name="due_day"></label>
+          <label class="full">Address<input [(ngModel)]="propertyForm.address" name="address" placeholder="Full street address"></label>
+
+          <ng-container *ngIf="!propertyForm.id">
+            <div class="full" style="background: var(--ink-50); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-top: 2px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="font-weight: 700; color: var(--ink-800); margin: 0; font-size: 11px;">
+                  CURRENT TENANT OCCUPANCY
+                </label>
+                <span style="font-size: 11px; font-weight: 600; color: var(--primary);">
+                  {{ filteredPropertyTenants.length }} of {{ tenants.length }} tenants
+                </span>
+              </div>
+
+              <!-- Tenant Search Bar -->
+              <div class="search" style="min-width: 100%; width: 100%; margin-bottom: 10px; background: #ffffff;">
+                ⌕ <input [(ngModel)]="propertyTenantSearch" name="prop_tenant_search" placeholder="Type to search tenant by name or phone..." style="font-size: 13px;">
+                <button *ngIf="propertyTenantSearch" type="button" class="icon-btn" style="padding: 0 4px; font-size: 14px; color: var(--ink-500);" (click)="propertyTenantSearch = ''" title="Clear search">×</button>
+              </div>
+
+              <!-- Quick Pick Option Buttons -->
+              <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;">
+                <button type="button" class="filter-chip" [class.active]="propertyForm.tenant_selection === 0" (click)="selectPropertyTenant(0)">
+                  🏠 Vacant / No tenant
+                </button>
+                <button type="button" class="filter-chip" [class.active]="propertyForm.tenant_selection === -1" (click)="selectPropertyTenant(-1)">
+                  ＋ Quick add new tenant...
+                </button>
+              </div>
+
+              <!-- Dropdown select -->
+              <label style="font-size: 10.5px; color: var(--ink-500); margin-bottom: 4px; font-weight: 600;">SELECT FROM MATCHING TENANTS:</label>
+              <select [(ngModel)]="propertyForm.tenant_selection" name="tenant_selection" style="width: 100%; font-size: 13px; font-weight: 500;">
+                <option [ngValue]="0">🏠 Vacant / No tenant</option>
+                <option [ngValue]="-1">＋ Quick add new tenant...</option>
+                <option *ngFor="let t of filteredPropertyTenants" [ngValue]="t.id">
+                  👤 {{ t.name }} {{ t.phone ? '· ' + t.phone : '' }}
+                </option>
+              </select>
+
+              <!-- Selected Tenant Indicator Badge -->
+              <div *ngIf="propertyForm.tenant_selection > 0" style="margin-top: 10px; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #065f46; display: flex; justify-content: space-between; align-items: center;">
+                <span>✓ Selected: <b>{{ selectedTenantName }}</b></span>
+                <button type="button" class="text-btn" style="padding: 2px 8px; font-size: 11px;" (click)="selectPropertyTenant(0)">Change to Vacant</button>
+              </div>
+
+              <!-- No match helper -->
+              <div *ngIf="propertyTenantSearch && !filteredPropertyTenants.length" style="font-size: 12px; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; padding: 8px 10px; border-radius: 6px; margin-top: 8px; display: flex; align-items: center; justify-content: space-between;">
+                <span>No registered tenant matches "<b>{{ propertyTenantSearch }}</b>"</span>
+                <button type="button" class="text-btn" (click)="selectPropertyTenant(-1); propertyForm.new_tenant_name = propertyTenantSearch">＋ Add "{{ propertyTenantSearch }}" as new tenant</button>
+              </div>
+            </div>
+
+            <ng-container *ngIf="propertyForm.tenant_selection === -1">
+              <label>New tenant name <span style="color: #ef4444;">*</span>
+                <input required [(ngModel)]="propertyForm.new_tenant_name" name="new_tenant_name" placeholder="e.g. John Doe">
+              </label>
+              <label>New tenant phone
+                <input [(ngModel)]="propertyForm.new_tenant_phone" name="new_tenant_phone" placeholder="Phone number">
+              </label>
+            </ng-container>
+
+            <ng-container *ngIf="propertyForm.tenant_selection !== 0">
+              <label class="full" *ngIf="propertyForm.property_type === 'Shop'">Shop / Business trade name (optional)
+                <input [(ngModel)]="propertyForm.business_name" name="business_name" placeholder="e.g. Kathir Steels, Sri Krishna Sweets">
+              </label>
+              <label>Move-in date (optional)
+                <input type="date" [(ngModel)]="propertyForm.start_date" name="start_date">
+              </label>
+              <label>Monthly rent (₹)
+                <input type="number" min="0" step="0.01" [(ngModel)]="propertyForm.monthly_rent" name="rent" placeholder="Agreed rent">
+              </label>
+              <label>Deposit (₹)
+                <input type="number" min="0" step="0.01" [(ngModel)]="propertyForm.deposit" name="deposit" placeholder="0">
+              </label>
+            </ng-container>
+          </ng-container>
+
+          <ng-container *ngIf="propertyForm.id && !propertyHasTenancyHistory">
+            <label>Tenant name<input [(ngModel)]="propertyForm.tenant_name" name="tenant" placeholder="Current tenant"></label>
+            <label>Tenant phone<input [(ngModel)]="propertyForm.tenant_phone" name="phone" placeholder="Phone number"></label>
+            <label>Monthly rent (₹)<input required type="number" min="0" [(ngModel)]="propertyForm.monthly_rent" name="rent"></label>
+            <label>Advance paid (₹)<input type="number" min="0" [(ngModel)]="propertyForm.advance_paid" name="advance"></label>
+          </ng-container>
+
+          <label class="check full">
+            <input type="checkbox" [(ngModel)]="propertyForm.active" name="active"> Property is active
           </label>
         </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
+          <button class="btn primary" [disabled]="!propertyForm.name || !propertyForm.group_id">Save property</button>
+        </div>
+      </form>
+    </ng-container>
 
-        <!-- New Terms & Rent Section -->
-        <div class="full" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px;">
-          <h4 style="margin: 0 0 6px 0; color: #1e40af; font-size: 0.9rem;">3. New Tenancy Terms & Rent</h4>
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-            <label style="margin: 0;">Takeover / Move-in Date <span style="color: #ef4444;">*</span>
-              <input required type="date" [(ngModel)]="transferForm.takeover_start_date" name="tr_start_date">
-            </label>
-            <label style="margin: 0;">Agreed Monthly Rent (₹) <span style="color: #ef4444;">*</span>
-              <input required type="number" min="0" step="0.01" [(ngModel)]="transferForm.new_rent" name="tr_new_rent">
-            </label>
-            <label style="margin: 0;">Security Deposit Held (₹) <span style="color: #ef4444;">*</span>
-              <input required type="number" min="0" step="0.01" [(ngModel)]="transferForm.new_deposit" name="tr_new_dep">
-            </label>
+    <!-- Payment Modal -->
+    <ng-container *ngIf="modal === 'payment'">
+      <p class="eyebrow">RENT COLLECTION</p>
+      <h2>{{ editingPayment ? 'Edit rent payment' : 'Record rent payment' }}</h2>
+      <p class="modal-sub">
+        Record rent received from the tenant. In postpaid rental cycles, rent received in <b>September</b> covers the tenant's stay during <b>August</b>.
+      </p>
+      <form (ngSubmit)="savePayment()">
+        <div class="form-grid">
+          <label class="full">Property <span style="color: #ef4444;">*</span>
+            <select required [(ngModel)]="paymentForm.property_id" (ngModelChange)="selectPaymentTenancy()" name="property">
+              <option [ngValue]="0" disabled>Select a property</option>
+              <option *ngFor="let p of properties" [ngValue]="p.id">{{ p.name }} — {{ p.tenant_name || 'Vacant' }}</option>
+            </select>
+          </label>
+
+          <div class="full" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+              <label style="font-weight: 700; color: #1e293b; margin: 0;">
+                Rental Period / Stay Month <span style="color: #ef4444;">*</span>
+              </label>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn secondary" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;"
+                  [style.background]="paymentForm.rental_month === getPreviousMonth(paymentForm.paid_on) ? '#dbeafe' : ''"
+                  [style.borderColor]="paymentForm.rental_month === getPreviousMonth(paymentForm.paid_on) ? '#2563eb' : ''"
+                  [style.color]="paymentForm.rental_month === getPreviousMonth(paymentForm.paid_on) ? '#1e40af' : ''"
+                  (click)="setPaymentRentalMonth(getPreviousMonth(paymentForm.paid_on))">
+                  ⚡ Postpaid: {{ getPreviousMonth(paymentForm.paid_on) | date:'MMM yyyy' }} (Default)
+                </button>
+                <button type="button" class="btn secondary" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;"
+                  [style.background]="paymentForm.rental_month === (paymentForm.paid_on ? paymentForm.paid_on.slice(0, 7) : getCurrentMonth()) ? '#dbeafe' : ''"
+                  [style.borderColor]="paymentForm.rental_month === (paymentForm.paid_on ? paymentForm.paid_on.slice(0, 7) : getCurrentMonth()) ? '#2563eb' : ''"
+                  [style.color]="paymentForm.rental_month === (paymentForm.paid_on ? paymentForm.paid_on.slice(0, 7) : getCurrentMonth()) ? '#1e40af' : ''"
+                  (click)="setPaymentRentalMonth(paymentForm.paid_on ? paymentForm.paid_on.slice(0, 7) : getCurrentMonth())">
+                  ⚡ Same Month: {{ (paymentForm.paid_on ? paymentForm.paid_on.slice(0, 7) : getCurrentMonth()) | date:'MMM yyyy' }}
+                </button>
+              </div>
+            </div>
+            <input required type="month" [(ngModel)]="paymentForm.rental_month" (ngModelChange)="selectPaymentTenancy()" name="month" style="width: 100%; margin-bottom: 6px;">
+            <div style="font-size: 0.8rem; color: #334155; background: #e0f2fe; border: 1px solid #bae6fd; padding: 6px 10px; border-radius: 6px; margin-top: 4px;">
+              💡 <b>Billing cycle breakdown:</b> {{ billingCycleDescription(paymentForm.rental_month, paymentForm.paid_on) }}
+            </div>
           </div>
-          <label class="full" style="margin-top: 8px; margin-bottom: 0;">Transfer Notes / Remarks
-            <textarea [(ngModel)]="transferForm.transfer_notes" name="tr_notes" placeholder="Optional notes regarding takeover agreement, inventory, or key handover"></textarea>
+
+          <label class="full">Tenancy stay
+            <select [(ngModel)]="paymentForm.tenancy_id" name="payment_tenancy" (ngModelChange)="!editingPayment && fillPaymentRent()">
+              <option [ngValue]="null">{{ paymentNeedsTenancy ? 'Select tenancy' : 'Legacy payment — tenancy not set up' }}</option>
+              <option *ngFor="let t of paymentTenancies" [ngValue]="t.id">{{ t.tenant_name }} · {{ t.start_date || 'Move-in unknown' }} to {{ t.end_date || 'ongoing' }}</option>
+            </select>
+            <span *ngIf="paymentNeedsTenancy && !paymentTenancies.length" style="color: #ef4444; font-size: 0.8rem;">No tenancy covers {{ paymentForm.rental_month | date:'MMMM yyyy' }}. Check tenancy start/end dates.</span>
+          </label>
+
+          <label>Amount paid (₹) <span style="color: #ef4444;">*</span>
+            <input required type="number" min="1" [(ngModel)]="paymentForm.amount" name="amount">
+          </label>
+          <label>Payment receipt date <span style="color: #ef4444;">*</span>
+            <input required type="date" [(ngModel)]="paymentForm.paid_on" (ngModelChange)="onPaymentPaidOnChange()" name="paid_on">
+          </label>
+          <label>Payment method
+            <select [(ngModel)]="paymentForm.payment_method" name="method">
+              <option>Cash</option>
+              <option>Bank transfer</option>
+              <option>UPI</option>
+              <option>Cheque</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label class="full">Reference / transaction ID
+            <input [(ngModel)]="paymentForm.reference" name="reference" placeholder="e.g. UPI / IMPS / Cheque number">
+          </label>
+          <label class="full">Notes
+            <textarea [(ngModel)]="paymentForm.notes" name="notes" placeholder="Optional notes for this payment"></textarea>
           </label>
         </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
+          <button class="btn primary" [disabled]="paymentNeedsTenancy && !paymentForm.tenancy_id">
+            {{ editingPayment ? 'Save changes' : 'Record payment' }}
+          </button>
+        </div>
+      </form>
+    </ng-container>
 
-      </div>
+    <!-- Group Modal -->
+    <ng-container *ngIf="modal === 'group'">
+      <h2>{{ editingGroup ? 'Edit property group' : 'Add property group' }}</h2>
+      <p class="modal-sub">Give the apartment, complex or other group a name.</p>
+      <form #gf="ngForm" (ngSubmit)="gf.valid && saveGroup()">
+        <div class="form-grid">
+          <label class="full">Group name
+            <input required maxlength="120" [(ngModel)]="groupForm.name" name="group_name" placeholder="e.g. Lakshmi Apartments">
+          </label>
+          <label class="full">Group type
+            <input required maxlength="80" [(ngModel)]="groupForm.kind" name="kind" placeholder="Apartment, Shopping complex, or your own type" list="group-kinds">
+            <datalist id="group-kinds">
+              <option value="Apartment"></option>
+              <option value="Shopping complex"></option>
+            </datalist>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
+          <button class="btn primary" [disabled]="gf.invalid">Save group</button>
+        </div>
+      </form>
+    </ng-container>
 
-      <div class="modal-actions">
-        <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
-        <button class="btn primary" [disabled]="trf.invalid || (!transferForm.new_tenant_id && !transferForm.new_tenant_name.trim())">
-          Complete Transfer & Takeover
-        </button>
-      </div>
-    </form>
-  </ng-container>
-</div></div>
+    <!-- Tax Modal -->
+    <ng-container *ngIf="modal === 'tax'">
+      <h2>{{ editingTax ? 'Edit tax payment' : 'Record group tax payment' }}</h2>
+      <p class="modal-sub">Enter a property or water tax payment already made.</p>
+      <form #tf="ngForm" (ngSubmit)="tf.valid && saveTax()">
+        <div class="form-grid">
+          <label class="full">Group
+            <select required [(ngModel)]="taxForm.group_id" name="tax_group">
+              <option [ngValue]="0" disabled>Select group</option>
+              <option *ngFor="let g of groups" [ngValue]="g.id">{{ g.name }}</option>
+            </select>
+          </label>
+          <label>Tax type
+            <select [(ngModel)]="taxForm.tax_type" name="tax_type">
+              <option>Property tax</option>
+              <option>Water tax</option>
+            </select>
+          </label>
+          <label>Amount paid (₹)
+            <input required type="number" min="0.01" step="0.01" [(ngModel)]="taxForm.amount" name="tax_amount">
+          </label>
+          <label>Paid on
+            <input required type="date" [(ngModel)]="taxForm.paid_on" name="tax_date">
+          </label>
+          <label>Tax period
+            <input [(ngModel)]="taxForm.period" name="tax_period" placeholder="e.g. Apr–Sep 2026">
+          </label>
+          <label class="full">Receipt / reference
+            <input [(ngModel)]="taxForm.reference" name="tax_ref">
+          </label>
+          <label class="full">Notes
+            <textarea [(ngModel)]="taxForm.notes" name="tax_notes"></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
+          <button class="btn primary" [disabled]="tf.invalid || !taxForm.group_id">{{ editingTax ? 'Save changes' : 'Record tax' }}</button>
+        </div>
+      </form>
+    </ng-container>
+
+    <!-- Electricity Modal -->
+    <ng-container *ngIf="modal === 'electricity'">
+      <h2>{{ editingElectricity ? 'Edit owner-paid EB bill' : 'Record owner-paid EB bill' }}</h2>
+      <p class="modal-sub">Track the bill paid and how much the tenant has reimbursed.</p>
+      <form #ef="ngForm" (ngSubmit)="ef.valid && saveElectricity()">
+        <div class="form-grid">
+          <label class="full">Property
+            <select required [(ngModel)]="electricityForm.property_id" name="eb_property">
+              <option [ngValue]="0" disabled>Select property</option>
+              <option *ngFor="let p of ownerProperties" [ngValue]="p.id">{{ p.name }}</option>
+            </select>
+          </label>
+          <label>Bill period
+            <input required [(ngModel)]="electricityForm.period" name="eb_period" placeholder="e.g. Jul–Aug 2026">
+          </label>
+          <label>Owner paid on
+            <input required type="date" [(ngModel)]="electricityForm.paid_on" name="eb_date">
+          </label>
+          <label>Bill amount (₹)
+            <input required type="number" min="0.01" step="0.01" [(ngModel)]="electricityForm.amount" name="eb_amount">
+          </label>
+          <label>Already collected (₹)
+            <input required type="number" min="0" [max]="electricityForm.amount" step="0.01" [(ngModel)]="electricityForm.collected" name="eb_collected">
+          </label>
+          <label class="full">Reference
+            <input [(ngModel)]="electricityForm.reference" name="eb_reference">
+          </label>
+          <label class="full">Notes
+            <textarea [(ngModel)]="electricityForm.notes" name="eb_notes"></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
+          <button class="btn primary" [disabled]="ef.invalid || !electricityForm.property_id">{{ editingElectricity ? 'Save changes' : 'Record bill' }}</button>
+        </div>
+      </form>
+    </ng-container>
+
+    <!-- EB Collection Modal -->
+    <ng-container *ngIf="modal === 'collection'">
+      <h2>Update EB collection</h2>
+      <p class="modal-sub">Enter the total collected so far for this bill, including earlier payments.</p>
+      <form #cf="ngForm" (ngSubmit)="cf.valid && saveCollection()">
+        <div class="form-grid">
+          <label class="full">Total collected (₹)
+            <input required type="number" min="0" [max]="collectionForm.amount" step="0.01" [(ngModel)]="collectionForm.collected" name="collected">
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
+          <button class="btn primary" [disabled]="cf.invalid">Save collection</button>
+        </div>
+      </form>
+    </ng-container>
+
+    <!-- Expense Modal -->
+    <ng-container *ngIf="modal === 'expense'">
+      <h2>{{ editingExpense ? 'Edit property expense' : 'Record property expense / repair' }}</h2>
+      <p class="modal-sub">Track maintenance, renovation, whitewashing, or plumbing costs.</p>
+      <form #exf="ngForm" (ngSubmit)="exf.valid && saveExpense()">
+        <div class="form-grid">
+          <label class="full">Property <span style="color: #ef4444;">*</span>
+            <select required [(ngModel)]="expenseForm.property_id" name="ex_prop">
+              <option [ngValue]="0" disabled>Select property</option>
+              <option *ngFor="let p of properties" [ngValue]="p.id">{{ p.name }} ({{ p.group_name || 'Ungrouped' }})</option>
+            </select>
+          </label>
+          <label>Category <span style="color: #ef4444;">*</span>
+            <select required [(ngModel)]="expenseForm.category" name="ex_cat">
+              <option value="Repair">Repair</option>
+              <option value="Renovation">Renovation</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Painting">Painting</option>
+              <option value="Plumbing">Plumbing</option>
+              <option value="Electrical">Electrical</option>
+              <option value="Cleaning">Cleaning</option>
+              <option value="Carpentry">Carpentry</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+          <label>Amount (₹) <span style="color: #ef4444;">*</span>
+            <input required type="number" min="0.01" step="0.01" [(ngModel)]="expenseForm.amount" name="ex_amount">
+          </label>
+          <label>Expense date <span style="color: #ef4444;">*</span>
+            <input required type="date" [(ngModel)]="expenseForm.expense_date" name="ex_date">
+          </label>
+          <label>Paid to / Contractor
+            <input [(ngModel)]="expenseForm.paid_to" name="ex_paid_to" placeholder="e.g. Mani Painter / Shankar Electrician">
+          </label>
+          <label>Payment method
+            <select [(ngModel)]="expenseForm.payment_method" name="ex_method">
+              <option>Bank transfer</option>
+              <option>UPI</option>
+              <option>Cash</option>
+              <option>Cheque</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label class="full">Reference / Bill number
+            <input [(ngModel)]="expenseForm.reference" name="ex_ref" placeholder="Optional bill receipt or transaction ref">
+          </label>
+          <label class="full">Notes
+            <textarea [(ngModel)]="expenseForm.notes" name="ex_notes" placeholder="Details of repair or replacement"></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
+          <button class="btn primary" [disabled]="exf.invalid || !expenseForm.property_id">{{ editingExpense ? 'Save changes' : 'Record expense' }}</button>
+        </div>
+      </form>
+    </ng-container>
+
+    <!-- Tenant Modal -->
+    <ng-container *ngIf="modal === 'tenant'">
+      <h2>{{ tenantForm.id ? 'Edit tenant' : 'Add new tenant' }}</h2>
+      <p class="modal-sub">Manage person's contact info once, then link to properties.</p>
+      <form #tnf="ngForm" (ngSubmit)="tnf.valid && saveTenant()">
+        <div class="form-grid">
+          <label class="full">Tenant Name <span style="color: #ef4444;">*</span>
+            <input required [(ngModel)]="tenantForm.name" name="tn_name" placeholder="Full name">
+          </label>
+          <label class="full">Phone Number
+            <input [(ngModel)]="tenantForm.phone" name="tn_phone" placeholder="Contact number">
+          </label>
+          <label class="full">Notes
+            <textarea [(ngModel)]="tenantForm.notes" name="tn_notes" placeholder="ID proof, permanent address, employer details"></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
+          <button class="btn primary" [disabled]="tnf.invalid">Save tenant</button>
+        </div>
+      </form>
+    </ng-container>
+
+    <!-- Tenancy Modal -->
+    <ng-container *ngIf="modal === 'tenancy'">
+      <h2>{{ tenancyForm.id ? 'Edit tenancy stay' : 'Link tenant to property' }}</h2>
+      <p class="modal-sub">Record move-in, deposit, and initial rent for this stay.</p>
+      <form #tnyf="ngForm" (ngSubmit)="tnyf.valid && saveTenancy()">
+        <div class="form-grid">
+          <label class="full">Property <span style="color: #ef4444;">*</span>
+            <select required [(ngModel)]="tenancyForm.property_id" name="tny_prop">
+              <option *ngFor="let p of properties" [value]="p.id">{{ p.name }} ({{ p.group_name || 'Ungrouped' }})</option>
+            </select>
+          </label>
+          <label class="full">Tenant <span style="color: #ef4444;">*</span>
+            <select required [(ngModel)]="tenancyForm.tenant_id" name="tny_tenant">
+              <option *ngFor="let tn of tenants" [value]="tn.id">{{ tn.name }} {{ tn.phone ? '(' + tn.phone + ')' : '' }}</option>
+            </select>
+          </label>
+          <label class="full" *ngIf="isShopProperty(tenancyForm.property_id)">
+            Shop / Business Trade Name
+            <input [(ngModel)]="tenancyForm.business_name" name="tny_bus_name" placeholder="e.g. Kathir Steels, Sri Krishna Sweets">
+          </label>
+          <label>Move-in Date
+            <input type="date" [(ngModel)]="tenancyForm.start_date" name="tny_start">
+          </label>
+          <label>Move-out Date (Leave blank if active)
+            <input type="date" [(ngModel)]="tenancyForm.end_date" name="tny_end">
+          </label>
+          <label>Initial Monthly Rent (₹)
+            <input type="number" min="0" step="0.01" [(ngModel)]="tenancyForm.initial_rent" name="tny_rent">
+          </label>
+          <label>Deposit Paid (₹)
+            <input type="number" min="0" step="0.01" [(ngModel)]="tenancyForm.deposit" name="tny_deposit">
+          </label>
+          <label class="full">Notes
+            <textarea [(ngModel)]="tenancyForm.notes" name="tny_notes" placeholder="Agreement terms, lock-in period, remarks"></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
+          <button class="btn primary" [disabled]="tnyf.invalid || !tenancyForm.property_id || !tenancyForm.tenant_id">Save tenancy</button>
+        </div>
+      </form>
+    </ng-container>
+
+    <!-- Rent Rate Modal -->
+    <ng-container *ngIf="modal === 'rate'">
+      <h2>Add rent revision</h2>
+      <p class="modal-sub">Record a rent change and its effective start month.</p>
+      <form #rf="ngForm" (ngSubmit)="rf.valid && saveRate()">
+        <div class="form-grid">
+          <label class="full">Effective Month <span style="color: #ef4444;">*</span>
+            <input required type="month" [(ngModel)]="rateForm.effective_month" name="rf_month">
+          </label>
+          <label class="full">New Monthly Rent (₹) <span style="color: #ef4444;">*</span>
+            <input required type="number" min="0" step="0.01" [(ngModel)]="rateForm.amount" name="rf_amount">
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
+          <button class="btn primary" [disabled]="rf.invalid">Save rent revision</button>
+        </div>
+      </form>
+    </ng-container>
+
+    <!-- Refund Modal -->
+    <ng-container *ngIf="modal === 'refund'">
+      <h2>{{ editingRefund ? 'Edit deposit refund / deduction' : 'Record deposit refund & deductions' }}</h2>
+      <p class="modal-sub">Record security deposit returned or deductions made for whitewash/repairs.</p>
+      <form #refF="ngForm" (ngSubmit)="refF.valid && saveRefund()">
+        <div class="form-grid">
+          <label>Amount Refunded (₹)
+            <input type="number" min="0" step="0.01" [(ngModel)]="refundForm.amount" name="ref_amt">
+          </label>
+          <label>Refund Date
+            <input required type="date" [(ngModel)]="refundForm.refunded_on" name="ref_date">
+          </label>
+          <label>Payment Method
+            <select [(ngModel)]="refundForm.payment_method" name="ref_method">
+              <option>Bank transfer</option>
+              <option>UPI</option>
+              <option>Cash</option>
+              <option>Cheque</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>Reference
+            <input [(ngModel)]="refundForm.reference" name="ref_reference" placeholder="e.g. UPI / Cheque number">
+          </label>
+          <label>Deduction Amount (₹)
+            <input type="number" min="0" step="0.01" [(ngModel)]="refundForm.deduction_amount" name="ref_ded_amt" placeholder="e.g. 5000">
+          </label>
+          <label>Deduction Reason
+            <input [(ngModel)]="refundForm.deduction_reason" name="ref_ded_reason" placeholder="e.g. Whitewashing, damaged door repair">
+          </label>
+          <label class="check full">
+            <input type="checkbox" [(ngModel)]="refundForm.is_final_settlement" name="ref_is_final"> This concludes the full and final deposit settlement for this stay
+          </label>
+          <label class="full">Notes
+            <textarea [(ngModel)]="refundForm.notes" name="ref_notes" placeholder="Remarks or tenant acknowledgement"></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
+          <button class="btn primary" [disabled]="refF.invalid">{{ editingRefund ? 'Save changes' : 'Save refund record' }}</button>
+        </div>
+      </form>
+    </ng-container>
+
+    <!-- Tenancy Transfer Modal -->
+    <ng-container *ngIf="modal === 'transfer'">
+      <h2>⇄ Tenancy Transfer & Takeover</h2>
+      <p class="modal-sub">
+        End the existing tenancy for <b>{{ selectedTenancyForTransfer?.property_name }}</b> and transition to the next tenant with deposit rollover.
+      </p>
+      <form #trF="ngForm" (ngSubmit)="trF.valid && saveTransfer()">
+        <div class="form-grid">
+          <div class="full" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px;">
+            <b style="color: #1e293b; font-size: 0.85rem;">OUTGOING TENANCY SUMMARY:</b>
+            <div style="display: flex; gap: 16px; margin-top: 6px; font-size: 0.85rem; color: #475569; flex-wrap: wrap;">
+              <span>Tenant: <b>{{ selectedTenancyForTransfer?.tenant_name }}</b></span>
+              <span>Property: <b>{{ selectedTenancyForTransfer?.property_name }}</b></span>
+              <span>Deposit Held: <b style="color: #059669;">{{ currency(selectedTenancyForTransfer?.deposit_balance !== undefined ? selectedTenancyForTransfer?.deposit_balance : selectedTenancyForTransfer?.deposit) }}</b></span>
+            </div>
+          </div>
+
+          <label>Vacating / Handover Date <span style="color: #ef4444;">*</span>
+            <input required type="date" [(ngModel)]="transferForm.handover_date" name="tr_handover">
+          </label>
+          <label>Deposit Treatment <span style="color: #ef4444;">*</span>
+            <select [(ngModel)]="transferForm.deposit_action" (ngModelChange)="onTransferDepositActionChange()" name="tr_dep_action">
+              <option value="rollover_to_new_tenant">Rollover full deposit balance to new tenant</option>
+              <option value="refund_now">Refund deposit to outgoing tenant now</option>
+              <option value="settle_later">Deposit settled later (hold balance on old tenancy)</option>
+            </select>
+          </label>
+
+          <ng-container *ngIf="transferForm.deposit_action === 'refund_now'">
+            <label>Amount Refunded to Outgoing (₹)
+              <input type="number" min="0" step="0.01" [(ngModel)]="transferForm.refund_amount" (ngModelChange)="autoFillTransferDeduction()" name="tr_ref_amt">
+            </label>
+            <label>Refund Payment Method
+              <select [(ngModel)]="transferForm.refund_payment_method" name="tr_ref_method">
+                <option>Bank transfer</option>
+                <option>UPI</option>
+                <option>Cash</option>
+                <option>Cheque</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <label>Deduction for Repairs/Painting (₹)
+              <input type="number" min="0" step="0.01" [(ngModel)]="transferForm.deduction_amount" name="tr_ded_amt">
+            </label>
+            <label>Deduction Reason
+              <input [(ngModel)]="transferForm.deduction_reason" name="tr_ded_reason" placeholder="e.g. Whitewashing & repair charges">
+            </label>
+          </ng-container>
+
+          <div class="full" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-top: 4px;">
+            <b style="color: #166534; font-size: 0.85rem;">INCOMING NEW TENANT DETAILS:</b>
+          </div>
+
+          <label class="full">Choose from Registered Tenants
+            <select [(ngModel)]="transferForm.new_tenant_id" name="tr_new_tenant_id">
+              <option [ngValue]="0">＋ Add as a new tenant below...</option>
+              <option *ngFor="let tn of tenants" [ngValue]="tn.id">{{ tn.name }} {{ tn.phone ? '(' + tn.phone + ')' : '' }}</option>
+            </select>
+          </label>
+
+          <ng-container *ngIf="!transferForm.new_tenant_id">
+            <label>New Tenant Full Name <span style="color: #ef4444;">*</span>
+              <input [(ngModel)]="transferForm.new_tenant_name" name="tr_new_name" placeholder="e.g. Suresh Kumar">
+            </label>
+            <label>New Tenant Phone
+              <input [(ngModel)]="transferForm.new_tenant_phone" name="tr_new_phone" placeholder="Contact number">
+            </label>
+          </ng-container>
+
+          <label class="full" *ngIf="isShopProperty(selectedTenancyForTransfer?.property_id || 0)">
+            Shop / Business Trade Name
+            <input [(ngModel)]="transferForm.business_name" name="tr_bus_name" placeholder="e.g. Kathir Steels">
+          </label>
+          <label>New Tenancy Start Date <span style="color: #ef4444;">*</span>
+            <input required type="date" [(ngModel)]="transferForm.takeover_start_date" name="tr_start_date">
+          </label>
+          <label>Agreed Monthly Rent (₹) <span style="color: #ef4444;">*</span>
+            <input required type="number" min="0" step="0.01" [(ngModel)]="transferForm.new_rent" name="tr_new_rent">
+          </label>
+          <label>New Security Deposit (₹)
+            <input type="number" min="0" step="0.01" [(ngModel)]="transferForm.new_deposit" name="tr_new_deposit">
+          </label>
+          <label class="full">Transfer Notes
+            <textarea [(ngModel)]="transferForm.transfer_notes" name="tr_notes" placeholder="Notes on transfer agreement or conditions"></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" (click)="modal = null">Cancel</button>
+          <button class="btn primary" [disabled]="trF.invalid || (!transferForm.new_tenant_id && !transferForm.new_tenant_name?.trim())">
+            Complete Transfer & Takeover
+          </button>
+        </div>
+      </form>
+    </ng-container>
+  </div>
+</div>
+
 <div class="toast" *ngIf="toast">✓ {{ toast }}</div>

@@ -1,0 +1,141 @@
+<section class="page">
+  <div class="toolbar">
+    <div>
+      <h2>Tenant registry</h2>
+      <p>Keep each person's details once, then link their stays to properties.</p>
+    </div>
+    <button class="btn primary" (click)="openTenantRequested.emit()">＋ Add tenant</button>
+  </div>
+  
+  <div class="filters" style="margin-bottom: 16px;">
+    <label class="search" style="flex: 1; max-width: 400px;">⌕<input [(ngModel)]="tenantSearch" placeholder="Search tenant by name, phone, or notes..."></label>
+    <button *ngIf="tenantSearch" class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" (click)="tenantSearch = ''">Reset</button>
+  </div>
+  
+  <div class="property-grid">
+    <article class="property-card" *ngFor="let t of filteredTenants">
+      <h3>{{ t.name }}</h3>
+      <p class="location">{{ t.phone || 'No phone number' }}</p>
+      <p class="location">{{ t.notes }}</p>
+      <div class="tenant" style="margin-top: 8px;">
+        <small>LIFETIME RENT RECEIVED</small>
+        <b style="color: #15803d;">{{ currency(tenantTotalPaid(t.name)) }}</b>
+      </div>
+      <footer>
+        <button (click)="openTenantRequested.emit(t)">Edit tenant</button>
+      </footer>
+    </article>
+  </div>
+  
+  <p *ngIf="!filteredTenants.length && tenants.length" class="empty card">No tenants found matching "{{ tenantSearch }}".</p>
+  <p *ngIf="!tenants.length" class="empty card">Add your current or former tenants to get started.</p>
+  
+  <div class="toolbar section-gap">
+    <div>
+      <h2>Tenancy & rent history</h2>
+      <p>Add previous stays and rent changes for accurate historical balances.</p>
+    </div>
+    <button class="btn primary" [disabled]="!tenants.length || !properties.length" (click)="openTenancyRequested.emit()">＋ Add tenancy</button>
+  </div>
+  
+  <div class="filters" style="margin-bottom: 12px;">
+    <label class="search">⌕<input [(ngModel)]="tenancySearch" placeholder="Filter by property, group, tenant, or shop name"></label>
+    <select aria-label="Filter tenancy by group" [(ngModel)]="tenancyGroupFilter">
+      <option value="">All groups</option>
+      <option value="ungrouped">Ungrouped</option>
+      <option *ngFor="let g of groups" [value]="g.id">{{ g.name }}</option>
+    </select>
+  </div>
+  
+  <p class="notice">Enter the tenant's actual move-in date and starting rent. If rent was revised or increased over time, use "Add rent revision" to record each rate change and its effective month. Missing or conflicting history is marked incomplete, not treated as zero rent. Billing uses full calendar months.</p>
+  
+  <article class="card collection section-gap" *ngFor="let t of filteredTenancies">
+    <div class="toolbar">
+      <div>
+        <h2>
+          {{ t.property_name }}
+          <small *ngIf="t.group_name" style="font-size: 0.75rem; font-weight: 600; color: #4b5563; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; margin-left: 4px;">{{ t.group_name }}</small>
+          <span *ngIf="t.property_type" class="pill" style="font-size: 0.75rem; vertical-align: middle; margin: 0 4px;">{{ t.property_type }}</span>
+          — <span *ngIf="t.business_name" style="color: #2563eb;">{{ t.business_name }} ({{ t.tenant_name }})</span><span *ngIf="!t.business_name">{{ t.tenant_name }}</span>
+          <span *ngIf="t.is_settled || (t.deposit_balance === 0 && (t.total_refunded || t.total_deductions))" class="pill" style="background: #dcfce7; color: #15803d; font-weight: 700; font-size: 0.75rem; margin-left: 6px;">✓ Settlement Completed</span>
+          <span *ngIf="!t.is_settled && (t.deposit_balance || 0) > 0" class="pill" style="background: #fef3c7; color: #92400e; font-weight: 600; font-size: 0.75rem; margin-left: 6px;">Deposit Held: {{ currency(t.deposit_balance) }}</span>
+        </h2>
+        <p>{{ t.start_date || 'Move-in unknown' }} → {{ t.end_date || 'Ongoing' }}</p>
+        <p>{{ t.notes }}</p>
+      </div>
+      <div class="toolbar-actions">
+        <button class="btn secondary" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;" (click)="openTransferRequested.emit(t)" title="Transfer tenancy to another tenant">⇄ Transfer / Takeover</button>
+        <button class="btn secondary" (click)="openTenancyRequested.emit(t)">Edit tenancy</button>
+        <button class="btn secondary" (click)="openRateRequested.emit({ tenancy: t })">＋ Add rent revision</button>
+        <button class="btn primary" (click)="openRefundRequested.emit({ tenancy: t })">＋ Record deposit refund</button>
+      </div>
+    </div>
+
+    <div class="money-row section-gap" style="padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+      <div><small>ORIGINAL DEPOSIT</small><b>{{ currency(t.deposit) }}</b></div>
+      <div><small>REFUNDED TO TENANT</small><b style="color: #10b981;">{{ currency(t.total_refunded || 0) }}</b></div>
+      <div><small>DEDUCTIONS (REPAIRS/PAINTING)</small><b style="color: #f59e0b;">{{ currency(t.total_deductions || 0) }}</b></div>
+      <div>
+        <small>SETTLEMENT STATUS</small>
+        <b [style.color]="t.is_settled || (t.deposit_balance || 0) === 0 ? '#15803d' : '#ef4444'">
+          {{ t.is_settled || (t.deposit_balance || 0) === 0 ? 'Fully Settled (₹0)' : currency(t.deposit_balance) }}
+        </b>
+      </div>
+    </div>
+
+    <div class="table-wrap section-gap" *ngIf="tenancyRates(t.id).length">
+      <table>
+        <thead><tr><th>Effective month</th><th>Monthly rent</th><th></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let r of tenancyRates(t.id)">
+            <td>{{ r.effective_month }}</td>
+            <td>{{ currency(r.amount) }}</td>
+            <td><button class="text-btn" (click)="openRateRequested.emit({ tenancy: t, rate: r })">Edit</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="t.refunds?.length" class="section-gap">
+      <h4 style="margin: 8px 0; font-size: 0.9rem; color: #475569;">Deposit Refund Installments & Deductions</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Refund Date</th><th>Refunded Amount</th><th>Deduction for Repairs</th><th>Reason & Ref</th><th>Settlement</th><th>Notes / Justification</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ref of t.refunds">
+              <td>{{ ref.refunded_on || 'Date unknown' }}</td>
+              <td>
+                <b style="color: #10b981;">{{ currency(ref.amount) }}</b>
+                <small *ngIf="ref.payment_method && ref.amount > 0"> ({{ ref.payment_method }})</small>
+                <small *ngIf="ref.amount === 0" style="color: #64748b;"> (No cash refund)</small>
+              </td>
+              <td>
+                <span *ngIf="ref.deduction_amount" style="color: #d97706; font-weight: 600;">{{ currency(ref.deduction_amount) }}</span>
+                <span *ngIf="!ref.deduction_amount">—</span>
+              </td>
+              <td>
+                <span *ngIf="ref.deduction_reason" class="pill" style="background: #fef3c7; color: #92400e; font-size: 0.75rem;">{{ ref.deduction_reason }}</span>
+                <span *ngIf="ref.reference"><br><small>Ref: {{ ref.reference }}</small></span>
+                <span *ngIf="!ref.deduction_reason && !ref.reference">—</span>
+              </td>
+              <td>
+                <span *ngIf="ref.is_final_settlement" class="pill" style="background: #dcfce7; color: #15803d; font-size: 0.75rem; font-weight: 600;">Final</span>
+                <span *ngIf="!ref.is_final_settlement" class="pill" style="background: #f1f5f9; color: #64748b; font-size: 0.75rem;">Installment</span>
+              </td>
+              <td>{{ ref.notes || '—' }}</td>
+              <td>
+                <button class="text-btn" (click)="openRefundRequested.emit({ tenancy: t, refund: ref })">Edit</button>
+                <button class="text-btn" style="color: #ef4444;" (click)="removeRefundRequested.emit(ref)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </article>
+
+  <p *ngIf="!filteredTenancies.length && tenancies.length" class="empty card">No tenancy records match the current filter.</p>
+  <p *ngIf="!tenancies.length" class="empty card">No tenancy history yet. Existing payments remain preserved until you assign them.</p>
+</section>

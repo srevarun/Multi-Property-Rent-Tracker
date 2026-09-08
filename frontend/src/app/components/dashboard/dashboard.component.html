@@ -1,0 +1,148 @@
+<section *ngIf="dashboard" class="page">
+  <div class="toolbar">
+    <div>
+      <h2>Portfolio snapshot</h2>
+      <p>Tracking rent collection for <b>{{ dashboardStayMonth | date:'MMMM yyyy' }} stay</b> (collected during {{ selectedMonth | date:'MMMM yyyy' }}).</p>
+    </div>
+    <label class="month">
+      Collection month
+      <input type="month" [(ngModel)]="selectedMonth" (ngModelChange)="monthChange.emit(selectedMonth)">
+      <small style="display: block; font-size: 0.72rem; color: #64748b; margin-top: 2px;">
+        ⚡ Collecting for {{ dashboardStayMonth | date:'MMM yyyy' }} stay (Postpaid)
+      </small>
+    </label>
+  </div>
+
+  <p class="notice" *ngIf="dashboard.legacy_properties || dashboard.unassigned_payments">{{ dashboard.legacy_properties }} properties still use legacy rent details. {{ dashboard.unassigned_payments }} payments this month have no tenancy assigned. Add tenancy history and edit old payments to link them before relying on historical balances.</p>
+  <article class="notice" *ngIf="dashboard.unknown_properties.length"><b>Historical totals are incomplete</b><p *ngFor="let p of dashboard.unknown_properties">{{ p.name }}: {{ p.reason }}.</p><p>These properties are excluded from expected rent and balances until the missing details are entered.</p></article>
+  
+  <div class="stats">
+    <article><div class="stat-icon green">₹</div><p>Collected for {{ dashboardStayMonth | date:'MMM yyyy' }} stay</p><h3>{{ currency(dashboard.collected_rent) }}</h3><small><b>{{ dashboard.collection_rate }}%</b> of expected rent</small></article>
+    <article><div class="stat-icon amber">◷</div><p>Pending rent</p><h3>{{ currency(dashboard.pending_rent) }}</h3><small>{{ dashboard.pending_properties.length }} properties pending</small></article>
+    <article><div class="stat-icon blue">⌂</div><p>Properties charged</p><h3>{{ dashboard.total_properties }}</h3><small>{{ currency(dashboard.expected_rent) }} expected for {{ dashboardStayMonth | date:'MMM' }}</small></article>
+    <article><div class="stat-icon purple">◇</div><p>Advances held</p><h3>{{ currency(dashboard.total_advances) }}</h3><small>Total tenant deposits</small></article>
+  </div>
+
+  <!-- Group Performance Breakdown -->
+  <div *ngIf="groupSummaryStats.length" style="margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div>
+        <h3 style="font-size: 15px; font-weight: 700; color: var(--ink-900); margin: 0;">Group performance breakdown</h3>
+        <p style="font-size: 12px; color: var(--ink-500); margin: 2px 0 0 0;">Rent collection status across your apartments and complexes for {{ dashboardStayMonth | date:'MMM yyyy' }} stay ({{ selectedMonth | date:'MMM yyyy' }} collections)</p>
+      </div>
+      <button *ngIf="dashboardGroupFilter" class="btn secondary" style="font-size: 11.5px; padding: 4px 10px;" (click)="dashboardGroupFilter = ''">
+        ✕ Clear group filter
+      </button>
+    </div>
+    <div class="group-summary-grid">
+      <div *ngFor="let g of groupSummaryStats" 
+           class="group-summary-card" 
+           [class.selected]="dashboardGroupFilter === '' + g.id"
+           (click)="setDashboardGroup('' + g.id)">
+        <div class="group-summary-header">
+          <div>
+            <div class="group-summary-title">
+              <span>🏢</span> {{ g.name }}
+              <span class="pill" style="font-size: 10px; padding: 2px 7px; background: var(--ink-100); color: var(--ink-700);">{{ g.kind || 'Group' }}</span>
+            </div>
+            <small style="color: var(--ink-500); font-size: 11px;">{{ g.totalUnits }} total units</small>
+          </div>
+          <span class="pill" [style.background]="g.rate >= 100 ? '#ecfdf5' : g.rate > 0 ? '#eff6ff' : '#fffbeb'" [style.color]="g.rate >= 100 ? '#059669' : g.rate > 0 ? '#2563eb' : '#d97706'">
+            {{ g.rate }}% collected
+          </span>
+        </div>
+        
+        <div class="group-summary-stats">
+          <div class="group-stat-col">
+            <small>Expected</small>
+            <b>{{ currency(g.expected) }}</b>
+          </div>
+          <div class="group-stat-col">
+            <small style="color: #059669;">Collected</small>
+            <b style="color: #059669;">{{ currency(g.collected) }}</b>
+          </div>
+          <div class="group-stat-col">
+            <small style="color: #d97706;">Pending</small>
+            <b style="color: #d97706;">{{ currency(g.pending) }}</b>
+          </div>
+        </div>
+
+        <div class="group-progress-bar">
+          <span [style.width.%]="g.rate"></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: var(--ink-500);">
+          <span>{{ g.pendingCount ? g.pendingCount + ' unit(s) pending' : 'All units paid' }}</span>
+          <span style="font-weight: 600; color: var(--primary);">{{ dashboardGroupFilter === '' + g.id ? 'Filtered ✓' : 'Click to filter ›' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <article class="card collection">
+      <div class="card-head"><div><h2>Collection progress</h2><p>{{ dashboardStayMonth | date:'MMMM yyyy' }} stay (Collected in {{ selectedMonth | date:'MMMM yyyy' }})</p></div><span class="rate">{{ dashboard.collection_rate }}%</span></div>
+      <div class="progress"><span [style.width.%]="dashboard.collection_rate"></span></div>
+      <div class="progress-labels"><span><i class="dot paid"></i>Collected <b>{{ currency(dashboard.collected_rent) }}</b></span><span><i class="dot pending"></i>Pending <b>{{ currency(dashboard.pending_rent) }}</b></span></div>
+    </article>
+    <article class="card quick"><h2>Quick actions</h2><button (click)="openPropertyRequested.emit()"><span>＋</span><div><b>Add a property</b><small>Register a new rental unit</small></div>›</button><button (click)="openGroupRequested.emit()"><span>⌖</span><div><b>Add a group</b><small>Group houses or shops together</small></div>›</button></article>
+  </div>
+
+  <article class="card table-card">
+    <div class="card-head">
+      <div>
+        <h2>Rent due for {{ dashboardStayMonth | date:'MMMM yyyy' }} stay</h2>
+        <p>Properties with a balance for {{ dashboardStayMonth | date:'MMMM yyyy' }} stay (collected in {{ selectedMonth | date:'MMMM yyyy' }})</p>
+      </div>
+      <span class="pill">{{ filteredDashboardPending.length }} pending</span>
+    </div>
+
+    <div style="padding: 10px 18px; background: #fafbfb; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <div class="filter-chips" style="margin-bottom: 0;">
+        <button class="filter-chip" [class.active]="!dashboardGroupFilter" (click)="dashboardGroupFilter = ''">
+          All ({{ dashboard.pending_properties.length }})
+        </button>
+        <button *ngFor="let g of groups" class="filter-chip" [class.active]="dashboardGroupFilter === '' + g.id" (click)="setDashboardGroup('' + g.id)">
+          {{ g.name }}
+        </button>
+      </div>
+      <div class="search" style="min-width: 220px; padding: 4px 10px; background: #ffffff;">
+        ⌕ <input [(ngModel)]="dashboardSearch" placeholder="Search unit or tenant..." style="font-size: 12px;">
+      </div>
+    </div>
+
+    <div class="empty" *ngIf="!filteredDashboardPending.length && !dashboard.unknown_properties.length">
+      <div>✓</div>
+      <h3>All caught up!</h3>
+      <p *ngIf="!dashboard.pending_properties.length">Every property with known rent for {{ dashboardStayMonth | date:'MMMM yyyy' }} stay is fully paid.</p>
+      <p *ngIf="dashboard.pending_properties.length">No pending properties match the current group or search filter.</p>
+    </div>
+
+    <div class="table-wrap" *ngIf="filteredDashboardPending.length">
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Tenant</th>
+            <th>Stay Period & Due Date</th>
+            <th>Monthly Rent</th>
+            <th>Balance Due</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of filteredDashboardPending">
+            <td><b>{{ p.name }}</b><small>{{ p.group_name || 'Ungrouped' }} · {{ p.property_type || 'House' }}</small></td>
+            <td><span *ngIf="p.business_name && p.property_type === 'Shop'"><b>{{ p.business_name }}</b> <small>({{ p.tenant_name || 'Vacant' }})</small></span><span *ngIf="!p.business_name || p.property_type !== 'Shop'">{{ p.tenant_name || 'Vacant' }}</span></td>
+            <td>
+              <b>{{ dashboardStayMonth | date:'MMM yyyy' }} stay</b>
+              <br><small style="color: #64748b;">Due by {{ p.due_day }}th {{ selectedMonth | date:'MMM' }}</small>
+            </td>
+            <td>{{ currency(p.monthly_rent) }}</td>
+            <td class="balance">{{ currency(p.monthly_rent - p.amount_paid) }}</td>
+            <td><button class="text-btn" (click)="openPaymentRequested.emit(p)">Record payment</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

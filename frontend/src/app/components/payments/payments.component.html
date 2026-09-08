@@ -1,0 +1,90 @@
+<section class="page">
+  <div class="toolbar">
+    <div>
+      <h2>Complete payment history</h2>
+      <p>Every rent payment in one searchable ledger, with stay month and collection date.</p>
+    </div>
+    <button class="btn primary" (click)="openPaymentRequested.emit()">＋ Record rent</button>
+  </div>
+
+  <div class="filters" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+    <label class="search" style="flex: 1; min-width: 180px;">⌕<input [(ngModel)]="search" placeholder="Search reference, notes..."></label>
+    <select aria-label="Filter payment by property" [(ngModel)]="paymentPropertyFilter">
+      <option value="">All properties</option>
+      <option *ngFor="let p of properties" [value]="p.id">{{ p.name }}</option>
+    </select>
+    <select aria-label="Filter payment by tenant" [(ngModel)]="paymentTenantFilter">
+      <option value="">All tenants</option>
+      <option *ngFor="let tn of tenants" [value]="tn.name">{{ tn.name }}</option>
+    </select>
+    <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #475569;">
+      From stay: <input type="month" [(ngModel)]="paymentFromMonth" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+    </label>
+    <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #475569;">
+      To stay: <input type="month" [(ngModel)]="paymentToMonth" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;">
+    </label>
+    <button *ngIf="paymentPropertyFilter || paymentTenantFilter || paymentFromMonth || paymentToMonth || search" class="btn secondary" style="padding: 6px 12px; font-size: 0.8rem;" (click)="paymentPropertyFilter=''; paymentTenantFilter=''; paymentFromMonth=''; paymentToMonth=''; search=''">Reset</button>
+  </div>
+
+  <div class="money-row section-gap" style="padding: 12px 16px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 16px;">
+    <div><small style="color: #166534;">RENT COLLECTED (FILTERED)</small><b style="color: #15803d; font-size: 1.25rem;">{{ currency(filteredPaymentsTotal) }}</b></div>
+    <div><small style="color: #166534;">PAYMENTS COUNT</small><b style="color: #15803d; font-size: 1.25rem;">{{ filteredPayments.length }} receipts</b></div>
+    <div *ngIf="paymentTenantFilter"><small style="color: #166534;">TENANT</small><b style="color: #15803d;">{{ paymentTenantFilter }}</b></div>
+    <div *ngIf="paymentFromMonth || paymentToMonth"><small style="color: #166534;">STAY TIMEFRAME</small><b style="color: #15803d;">{{ (paymentFromMonth || 'Start') }} → {{ (paymentToMonth || 'Latest') }}</b></div>
+  </div>
+
+  <article class="card table-card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Receipt</th>
+            <th>Property</th>
+            <th>Stay Month (Period)</th>
+            <th>Paid on (Date)</th>
+            <th>Billing Cycle</th>
+            <th>Method</th>
+            <th>Reference</th>
+            <th>Amount</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of filteredPayments">
+            <td class="muted">#{{ p.id }}</td>
+            <td>
+              <b>{{ p.property_name }}</b>
+              <small>{{ p.group_name || 'Ungrouped' }} · <span *ngIf="p.business_name"><b>{{ p.business_name }}</b> ({{ p.tenant_name }})</span><span *ngIf="!p.business_name">{{ p.tenant_name || 'Unknown tenant' }}</span><span *ngIf="!p.tenancy_id"> · Unassigned legacy payment</span></small>
+            </td>
+            <td>
+              <b>{{ p.rental_month | date:'MMM yyyy' }}</b>
+              <br><small style="color: #64748b;">Month of stay</small>
+            </td>
+            <td>
+              <b>{{ p.paid_on | date:'dd MMM yyyy' }}</b>
+            </td>
+            <td>
+              <span *ngIf="isPostpaid(p.rental_month, p.paid_on)" class="pill" style="background: #e0f2fe; color: #0369a1; font-size: 0.72rem; font-weight: 600;" title="Postpaid: Paid after the stay month concluded">
+                Postpaid ({{ p.paid_on | date:'MMM' }} for {{ p.rental_month | date:'MMM' }})
+              </span>
+              <span *ngIf="p.paid_on && p.paid_on.slice(0, 7) === p.rental_month" class="pill" style="background: #f1f5f9; color: #475569; font-size: 0.72rem;">
+                Same month
+              </span>
+              <span *ngIf="p.paid_on && p.paid_on.slice(0, 7) < p.rental_month" class="pill" style="background: #fef3c7; color: #92400e; font-size: 0.72rem;">
+                Advance
+              </span>
+            </td>
+            <td><span class="method">{{ p.payment_method }}</span></td>
+            <td>{{ p.reference || '—' }}</td>
+            <td class="amount">{{ currency(p.amount) }}</td>
+            <td>
+              <button class="text-btn" (click)="editPaymentRequested.emit(p)">Edit</button>
+              <button class="icon-btn danger" (click)="removePaymentRequested.emit(p)" title="Delete">×</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" *ngIf="!filteredPayments.length"><div>₹</div><h3>No payments found</h3><p>No payments match the selected property, tenant, or timeframe.</p></div>
+  </article>
+</section>

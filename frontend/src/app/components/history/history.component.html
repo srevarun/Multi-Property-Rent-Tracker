@@ -1,0 +1,49 @@
+<section class="page">
+  <div class="toolbar">
+    <div>
+      <h2>Edit history</h2>
+      <p>Changes recorded from this update onward. Earlier edits are not available.</p>
+    </div>
+  </div>
+  <div class="filters">
+    <select aria-label="History record type" [(ngModel)]="historyFilter">
+      <option value="">All records</option>
+      <option value="tenants">Tenants</option>
+      <option value="tenancies">Tenancies</option>
+      <option value="rent_rates">Rent rates</option>
+      <option value="deposit_refunds">Deposit refunds</option>
+      <option value="property_expenses">Property expenses</option>
+      <option value="properties">Properties</option>
+      <option value="property_groups">Groups</option>
+      <option value="rent_payments">Rent payments</option>
+      <option value="group_taxes">Tax payments</option>
+      <option value="electricity_bills">Electricity bills</option>
+    </select>
+  </div>
+  <article class="card table-card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Edited at</th>
+            <th>Record</th>
+            <th>Changes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of visibleHistory">
+            <td>{{ h.edited_at | date:'dd MMM yyyy, HH:mm:ss' }}</td>
+            <td><b>{{ entityName(h.entity) }} #{{ h.record_id }}</b><small>{{ h.label }}</small></td>
+            <td class="history-changes">
+              <div *ngFor="let c of h.changes">
+                <b>{{ fieldName(c.field) }}</b>
+                <span>{{ historyValue(c.before) }} → {{ historyValue(c.after) }}</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" *ngIf="!visibleHistory.length">No edits recorded yet.</div>
+  </article>
+</section>
